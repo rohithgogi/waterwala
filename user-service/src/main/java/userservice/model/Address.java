@@ -1,6 +1,7 @@
 package userservice.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import userservice.enums.AddressType;
@@ -8,6 +9,11 @@ import userservice.enums.AddressType;
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Table(name = "addresses")
 public class Address {
     @Id

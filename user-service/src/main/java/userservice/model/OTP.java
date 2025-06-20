@@ -1,10 +1,7 @@
 package userservice.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import userservice.enums.OTPStatus;
 import userservice.enums.OTPType;
 
@@ -12,6 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "otps")
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor

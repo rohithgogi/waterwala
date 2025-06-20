@@ -2,12 +2,17 @@ package userservice.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Table(name = "user_sessions")
 public class UserSession {
     @Id
