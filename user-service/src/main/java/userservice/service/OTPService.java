@@ -67,7 +67,19 @@ public class OTPService {
         }
         otp.setAttemptCount(otp.getAttemptCount()+1);
 
-
+        //verifying otp code
+        if(otp.getOtpCode().equals(otpCode)){
+            otp.setStatus(OTPStatus.VERIFIED);
+            otp.setVerifiedAt(LocalDateTime.now());
+            otpRepository.save(otp);
+            return true;
+        }else{
+            if(otp.getAttemptCount()>=3){
+                otp.setStatus(OTPStatus.FAILED);
+            }
+            otpRepository.save(otp);
+            return false;
+        }
     }
 
     public boolean isOTPVerified(String contact, OTPType type) {
