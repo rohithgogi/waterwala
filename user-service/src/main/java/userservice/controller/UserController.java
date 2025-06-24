@@ -20,7 +20,7 @@ import java.sql.PreparedStatement;
 
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("api/user-service/v1/users")
 @RequiredArgsConstructor
 @CrossOrigin(origins="*")
 public class UserController {

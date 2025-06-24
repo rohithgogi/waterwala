@@ -15,7 +15,7 @@ import userservice.service.AddressService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/addresses")
+@RequestMapping("api/user-service/v1/addresses")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AddressController {

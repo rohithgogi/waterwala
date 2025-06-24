@@ -9,7 +9,7 @@ import userservice.enums.OTPType;
 import userservice.service.OTPService;
 
 @RestController
-@RequestMapping("/api/v1/otp")
+@RequestMapping("api/user-service/v1/otp")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class OtpController {
