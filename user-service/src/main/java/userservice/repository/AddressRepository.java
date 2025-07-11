@@ -13,6 +13,7 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
 
     boolean existsByUserId(Long userId);
 
+    boolean existsByIdAndUserId(Long addressId, Long userId);
 
     List<Address> findByUserIdOrderByIsDefaultDescCreatedAtDesc(Long userId);
 

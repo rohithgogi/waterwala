@@ -1,4 +1,42 @@
 package userservice.security;
 
-public class JwtAuthenticationEntryPoint {
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+import userservice.dto.CommonResponseDto.ApiResponse;
+
+import java.io.IOException;
+
+@Component
+@Slf4j
+public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
+    private final ObjectMapper objectMapper;
+
+    public JwtAuthenticationEntryPoint() {
+        this.objectMapper = new ObjectMapper();
+        // Register JavaTimeModule to handle LocalDateTime
+        this.objectMapper.registerModule(new JavaTimeModule());
+        // Disable writing dates as timestamps
+        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
+
+    @Override
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+        log.error("Unauthorized access: {}", authException.getMessage());
+
+        response.setContentType("application/json");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
+        ApiResponse<Object> errorResponse=ApiResponse.error("Authentication required",null);
+
+        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+    }
 }

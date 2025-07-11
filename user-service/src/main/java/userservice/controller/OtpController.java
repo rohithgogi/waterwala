@@ -9,32 +9,26 @@ import userservice.enums.OTPType;
 import userservice.service.OTPService;
 
 @RestController
-@RequestMapping("api/user-service/v1/otp")
+@RequestMapping("api/v1/otp")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class OtpController {
     private final OTPService otpService;
 
     @PostMapping("/send/email-verification")
-    public ResponseEntity<ApiResponse<OTPResponseDto>> sendEmailVerificationOTP(@RequestParam String email){
+    public ResponseEntity<ApiResponse<OTPResponseDto>> sendEmailVerificationOTP(@RequestParam String email){ //done
         otpService.sendEmailVerificationOTP(email);
         OTPResponseDto response=OTPResponseDto.sent(OTPType.EMAIL_VERIFICATION,java.time.LocalDateTime.now().plusSeconds(600));
         return ResponseEntity.ok(ApiResponse.success("Email verification OTP sent successfully", response));
     }
 
     @PostMapping("/send/phone-verification")
-    public ResponseEntity<ApiResponse<OTPResponseDto>> sendPhoneVerificationOTP(@RequestParam String phone){
+    public ResponseEntity<ApiResponse<OTPResponseDto>> sendPhoneVerificationOTP(@RequestParam String phone){ //done
         otpService.sendPhoneVerificationOTP(phone);
         OTPResponseDto response=OTPResponseDto.sent(OTPType.PHONE_VERIFICATION,java.time.LocalDateTime.now().plusSeconds(600));
         return ResponseEntity.ok(ApiResponse.success("Phone Verification OTP sent successfully",response));
     }
 
-    @PostMapping("/send/login")
-    public ResponseEntity<ApiResponse<OTPResponseDto>> sendLoginOTP(@RequestParam String phone){
-        otpService.sendLoginOTP(phone);
-        OTPResponseDto response=OTPResponseDto.sent(OTPType.LOGIN,java.time.LocalDateTime.now().plusSeconds(300));
-        return ResponseEntity.ok(ApiResponse.success("Login OTP sent successfully",response));
-    }
 
     @PostMapping("/send/password-reset")
     public ResponseEntity<ApiResponse<OTPResponseDto>> sendPasswordResetOTP(@RequestParam String phone){

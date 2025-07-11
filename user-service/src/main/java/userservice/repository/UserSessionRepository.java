@@ -28,4 +28,6 @@ public interface UserSessionRepository extends JpaRepository<UserSession,Long> {
     @Modifying
     @Query("UPDATE UserSession s SET s.isActive = false WHERE s.user.id = :userId")
     void deactivateAllSessionsByUserId(@Param("userId") Long userId);
+
+    boolean existsByIdAndUserId(Long sessionId, Long userId);
 }

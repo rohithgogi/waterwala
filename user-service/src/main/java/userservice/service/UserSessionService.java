@@ -1,8 +1,10 @@
 package userservice.service;
 
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import userservice.dto.UserSessionDto;
 import userservice.exceptions.SessionNotFoundException;
 import userservice.exceptions.UserNotFoundException;
@@ -17,11 +19,11 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-
+@Transactional
 public class UserSessionService {
     private final UserSessionRepository sessionRepository;
     private final UserRepository userRepository;
-
+    @Transactional
     public UserSessionDto createSession(Long userId, String deviceId, String deviceType, String fcmToken ){
 
         User user=userRepository.findById(userId)
@@ -74,6 +76,7 @@ public class UserSessionService {
                     sessionRepository.save(session);
                 });
     }
+    @PreAuthorize("hasRole('ADMIN') or hasAnyRole('CUSTOMER', 'BUSINESS_OWNER')")
     public void deactivateSession(String sessionToken){
         UserSession session = sessionRepository.findBySessionTokenAndIsActiveTrue(sessionToken)
                 .orElseThrow(() -> new SessionNotFoundException("Session not found or already inactive"));
@@ -81,12 +84,12 @@ public class UserSessionService {
         session.setIsActive(false);
         sessionRepository.save(session);
     }
-
+    @PreAuthorize("hasRole('ADMIN') or (hasAnyRole('BUSINESS_OWNER', 'CUSTOMER') and #userId == authentication.principal)")
     public void deactivateAllSessionsByUserId(Long userId){
         sessionRepository.deactivateAllSessionsByUserId(userId);
 
     }
-
+    @PreAuthorize("hasRole('ADMIN') or (hasAnyRole('BUSINESS_OWNER', 'CUSTOMER') and #userId == authentication.principal)")
     public List<UserSessionDto> getUserActiveSessions(Long userId){
         List<UserSession> sessions=sessionRepository.findByUserIdAndIsActiveTrueOrderByLastAccessedAtDesc(userId);
         return sessions.stream()

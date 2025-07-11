@@ -1,6 +1,7 @@
 package userservice.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import userservice.dto.AddressDto;
 import userservice.dto.AddressResponseDto;
@@ -10,6 +11,7 @@ import userservice.model.Address;
 import userservice.model.User;
 import userservice.repository.AddressRepository;
 import userservice.repository.UserRepository;
+import userservice.security.SecurityHelper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,7 +21,8 @@ import java.util.stream.Collectors;
 public class AddressService {
     private final AddressRepository addressRepository;
     private final UserRepository userRepository;
-
+    private final SecurityHelper securityHelper;
+    @PreAuthorize("hasRole('ADMIN') or (hasAnyRole('BUSINESS_OWNER', 'CUSTOMER') and #userId==authentication.principal)")
     public AddressResponseDto addAddress(Long userId, AddressDto addressDto){
         User user=userRepository.findById(userId)
                 .orElseThrow(()->new UserNotFoundException("User not found with ID: "+userId));
@@ -45,7 +48,7 @@ public class AddressService {
         Address savedAddress=addressRepository.save(address);
         return convertToResponseDto(savedAddress);
     }
-
+    @PreAuthorize("hasRole('ADMIN') or @addressService.isAddressOwner(#addressId, authentication.principal)")
     public AddressResponseDto updateAddress(Long addressId, AddressDto addressDto){
         Address address= addressRepository.findById(addressId)
                 .orElseThrow(()-> new AddressNotFoundException("Address not found with ID: "+addressId));
@@ -70,6 +73,10 @@ public class AddressService {
         return convertToResponseDto(updatedAddress);
     }
 
+    public boolean isAddressOwner(Long addressId, Long userId) {
+        return securityHelper.isAddressOwner(addressId, userId);
+    }
+    @PreAuthorize("hasRole('ADMIN') or @addressService.isAddressOwner(#addressId, authentication.principal)")
     public void deleteAddress(Long addressId){
         Address address=addressRepository.findById(addressId)
                 .orElseThrow(()->new AddressNotFoundException("Address not found with ID: "+addressId));
@@ -87,7 +94,7 @@ public class AddressService {
         address.setIsDefault(true);
         addressRepository.save(address);
     }
-
+    @PreAuthorize("hasRole('ADMIN') or (hasAnyRole('BUSINESS_OWNER', 'CUSTOMER') and #userId == authentication.principal)")
     public List<AddressResponseDto> getAllAddresses(Long userID){
         List<Address> addresses=addressRepository.findByUserIdOrderByIsDefaultDescCreatedAtDesc(userID);
         return addresses.stream()

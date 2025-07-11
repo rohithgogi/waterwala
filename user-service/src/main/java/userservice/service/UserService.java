@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import userservice.dto.UserRegistrationDto;
 import userservice.dto.UserResponseDto;
@@ -56,19 +57,16 @@ public class UserService {
                 .orElseThrow(()->new UserNotFoundException("User not found with ID: " + userId));
         return convertToResponseDto(user);
     }
-
     public UserResponseDto getUserByEmail(String email){
         User user=userRepository.findByEmail(email)
                 .orElseThrow(()->new UserNotFoundException("User not found with email: " + email));
         return convertToResponseDto(user);
     }
-
     public UserResponseDto getUserByPhone(String phone){
         User user=userRepository.findByPhone(phone)
                 .orElseThrow(()->new UserNotFoundException("User not found with phone: " + phone));
         return convertToResponseDto(user);
     }
-
     public UserResponseDto updateUser(Long userId, UserUpdateDto updateDto){
 
         User user=userRepository.findById(userId)
@@ -88,7 +86,6 @@ public class UserService {
         return convertToResponseDto(updatedUser);
 
     }
-
     public void updateUserStatus(Long userId, UserStatus userStatus){
         User user=userRepository.findById(userId)
                 .orElseThrow(()->new UserNotFoundException("User not found with ID: "+userId));
@@ -96,7 +93,6 @@ public class UserService {
         user.setStatus(userStatus);
         userRepository.save(user);
     }
-
     public void verifyEmail(Long userId){
         User user=userRepository.findById(userId)
                 .orElseThrow(()->new UserNotFoundException("User not found with ID: "+userId));
@@ -108,7 +104,7 @@ public class UserService {
 
         userRepository.save(user);
     }
-
+    @PreAuthorize("hasRole('ADMIN') or (hasAnyRole('CUSTOMER', 'BUSINESS_OWNER') and #userId == authentication.principal)")
     public void verifyPhone(Long userId){
         User user=userRepository.findById(userId)
                 .orElseThrow(()->new UserNotFoundException("User not found with ID: "+userId));
@@ -121,7 +117,7 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public void UpdateLastLogin(Long userId){
+    public void updateLastLogin(Long userId){
         User user=userRepository.findById(userId)
                 .orElseThrow(()->new UserNotFoundException("User not found with ID: "+userId));
         user.setLastLoginAt(LocalDateTime.now());

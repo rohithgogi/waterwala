@@ -23,6 +23,8 @@
         <module>shared-libraries/common-dto</module>
         <module>shared-libraries/common-security</module>
         <module>shared-libraries/common-exceptions</module>
+        <module>product-service</module>
+
     </modules>
 
     <dependencyManagement>

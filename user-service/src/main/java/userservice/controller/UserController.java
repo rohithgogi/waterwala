@@ -20,33 +20,35 @@ import java.sql.PreparedStatement;
 
 
 @RestController
-@RequestMapping("api/user-service/v1/users")
+@RequestMapping("api/v1/users")
 @RequiredArgsConstructor
 @CrossOrigin(origins="*")
 public class UserController {
 
     private final UserService service;
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponseDto>> registerUser(@Valid @RequestBody UserRegistrationDto registrationDto){
+    public ResponseEntity<ApiResponse<UserResponseDto>> registerUser(@Valid @RequestBody UserRegistrationDto registrationDto){ //done
         UserResponseDto user= service.registerUser(registrationDto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("User registered successfully",user));
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@RequestParam Long userId){
+
+
+    @GetMapping("/id/{userId}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable Long userId){
         UserResponseDto user=service.getUserById(userId);
         return ResponseEntity.ok(ApiResponse.success("User retrieved successfully",user));
     }
 
-    @GetMapping("/{email}")
-    public ResponseEntity<ApiResponse<UserResponseDto>> getUserByEmail(@RequestParam String email){
+    @GetMapping("/email/{email}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUserByEmail(@PathVariable String email){
         UserResponseDto user=service.getUserByEmail(email);
         return ResponseEntity.ok(ApiResponse.success("User retrieved successfully",user));
     }
 
-    @GetMapping("/{phone}")
-    public ResponseEntity<ApiResponse<UserResponseDto>> getUserByPhone(@RequestParam String phone){
+    @GetMapping("/phone/{phone}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUserByPhone(@PathVariable String phone){
         UserResponseDto user=service.getUserByPhone(phone);
         return ResponseEntity.ok(ApiResponse.success("User retrieved successfully",user));
     }
@@ -64,24 +66,24 @@ public class UserController {
     }
 
     @PatchMapping("/{userId}/verify-email")
-    public ResponseEntity<ApiResponse<UserResponseDto>> verifyEmail(@PathVariable Long userId){
+    public ResponseEntity<ApiResponse<UserResponseDto>> verifyEmail(@PathVariable Long userId){ //done
         service.verifyEmail(userId);
         return ResponseEntity.ok(ApiResponse.success("Email Verification completed"));
     }
 
     @PatchMapping("/{userId}/verify-phone")
-    public ResponseEntity<ApiResponse<UserResponseDto>> verifyPhone(@PathVariable Long userId){
+    public ResponseEntity<ApiResponse<UserResponseDto>> verifyPhone(@PathVariable Long userId){ //done
         service.verifyPhone(userId);
         return ResponseEntity.ok(ApiResponse.success("Phone Verification completed"));
     }
 
     @PatchMapping("/{userId}/last-login")
     public ResponseEntity<ApiResponse<UserResponseDto>> updateLastLogin(@PathVariable Long userId){
-        service.UpdateLastLogin(userId);
-        return ResponseEntity.ok(ApiResponse.success("lAT login updated successfully"));
+        service.updateLastLogin(userId);
+        return ResponseEntity.ok(ApiResponse.success("Last login updated successfully"));
     }
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<ApiResponse<Page<UserResponseDto>>> getAllUsers(@PageableDefault(size = 20) Pageable pageable){
         Page<UserResponseDto> users= service.getAllUsers(pageable);
         return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully",users));

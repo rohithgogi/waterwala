@@ -11,7 +11,7 @@ import userservice.service.UserSessionService;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/user-service/v1/sessions")
+@RequestMapping("api/v1/sessions")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class UserSessionController {
