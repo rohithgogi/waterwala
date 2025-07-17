@@ -1,0 +1,13 @@
+package businessservice.model;
+
+public enum ServiceType {
+    WATER_DELIVERY,
+    TANK_INSTALLATION,
+    TANK_CLEANING,
+    TANK_MAINTENANCE,
+    WATER_TESTING,
+    PURIFIER_INSTALLATION,
+    PURIFIER_MAINTENANCE,
+    BULK_SUPPLY,
+    EMERGENCY_SERVICE
+}
