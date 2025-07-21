@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -63,7 +64,7 @@ public class Business {
     @Column(nullable = false)
     private Boolean isAvailable;
 
-    @Column(precision = 3, scale = 2)
+    @Column
     private Double averageRating;
 
     @Column(nullable = false)
