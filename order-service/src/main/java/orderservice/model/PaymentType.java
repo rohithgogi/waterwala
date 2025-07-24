@@ -1,6 +1,6 @@
 package orderservice.model;
 
-public enum PAYMENT_TYPE {
+public enum PaymentType {
     FULL_PAYMENT,
     PARTIAL_PAYMENT,
     ADVANCE_PAYMENT,

@@ -25,6 +25,7 @@
         <module>shared-libraries/common-exceptions</module>
         <module>product-service</module>
         <module>business-service</module>
+        <module>order-service</module>
 
     </modules>
 
