@@ -35,14 +35,6 @@ public class OrderItem {
     @Column(nullable = false)
     private String productSku;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private orderservice.model.ProductCategory productCategory;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private orderservice.model.ProductType productType;
-
     @Column(nullable = false)
     private Integer quantity;
 
