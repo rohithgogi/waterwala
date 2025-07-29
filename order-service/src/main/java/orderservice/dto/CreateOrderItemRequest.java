@@ -29,13 +29,11 @@ public class CreateOrderItemRequest {
     @NotNull
     @Positive
     private BigDecimal unitPrice;
-
     private BigDecimal discountAmount;
 
     @NotNull
     @Positive
     private BigDecimal totalPrice;
-
     private String itemSpecifications;
     private LocalDateTime scheduledDeliveryTime;
 }

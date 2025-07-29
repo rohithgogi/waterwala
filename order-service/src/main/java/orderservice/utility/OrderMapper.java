@@ -4,14 +4,18 @@ import orderservice.dto.*;
 import orderservice.model.Order;
 import orderservice.model.OrderDeliveryAddress;
 import orderservice.model.OrderItem;
+import orderservice.model.OrderStatus;
+import orderservice.model.OrderItemStatus;
+import orderservice.model.PaymentStatus;
 import org.mapstruct.*;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring",
-unmappedTargetPolicy = ReportingPolicy.IGNORE,
-nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Component
 public interface OrderMapper {
 
     // Order mappings
@@ -61,14 +65,10 @@ public interface OrderMapper {
 
     // Custom mapping methods for complex scenarios
     @AfterMapping
-    default void setOrderItemsOrder(@MappingTarget Order order, OrderCreateRequest request) {
+    default void setOrderRelationships(@MappingTarget Order order, OrderCreateRequest request) {
         if (order.getOrderItems() != null) {
             order.getOrderItems().forEach(item -> item.setOrder(order));
         }
-    }
-
-    @AfterMapping
-    default void setDeliveryAddressOrder(@MappingTarget Order order, OrderCreateRequest request) {
         if (order.getDeliveryAddress() != null) {
             order.getDeliveryAddress().setOrder(order);
         }

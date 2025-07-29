@@ -1,0 +1,12 @@
+server:
+  port:8888
+spring:
+  application:
+    name:config-servers
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/rohithgogi/waterwala-config-repo
+          clone-on-start: true
+          default-label: main

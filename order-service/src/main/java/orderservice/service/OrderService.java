@@ -17,7 +17,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,17 +30,21 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
+@Validated
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final OrderNumberGenerator orderNumberGenerator;
 
-    public OrderResponse createOrder(OrderCreateRequest request){
+    public OrderResponse createOrder(@Valid OrderCreateRequest request) {
         log.info("Creating order for customer: {}", request.getCustomerId());
 
-        Order order=orderMapper.toEntity(request);
+        // Business validation
+        validateOrderRequest(request);
 
-        //set fields that mapper ignores
+        Order order = orderMapper.toEntity(request);
+
+        // Set fields that mapper ignores
         order.setOrderNumber(orderNumberGenerator.generate());
 
         // Create and set order items
@@ -55,42 +64,48 @@ public class OrderService {
         return orderMapper.toResponse(savedOrder);
     }
 
-    public OrderResponse getOrderById(Long id){
-        Order order=orderRepository.findById(id)
-                .orElseThrow(()->new OrderNotFoundException("Order not found with id:"+id));
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderById(@NotNull @Positive Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + id));
         return orderMapper.toResponse(order);
     }
 
-    public OrderResponse getOrderByNumber(String orderNumber) {
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderByNumber(@NotNull String orderNumber) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with number: " + orderNumber));
         return orderMapper.toResponse(order);
     }
 
-    public List<OrderResponse> getOrdersByCustomer(Long customerId) {
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrdersByCustomer(@NotNull @Positive Long customerId) {
         List<Order> orders = orderRepository.findByCustomerId(customerId);
         return orderMapper.toResponseList(orders);
     }
 
-    public Page<OrderResponse> getOrdersByCustomer(Long customerId, Pageable pageable) {
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getOrdersByCustomer(@NotNull @Positive Long customerId, Pageable pageable) {
         Page<Order> orders = orderRepository.findByCustomerId(customerId, pageable);
         return orders.map(orderMapper::toResponse);
     }
 
-    public List<OrderResponse> getOrdersByBusiness(Long businessId) {
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrdersByBusiness(@NotNull @Positive Long businessId) {
         List<Order> orders = orderRepository.findByBusinessId(businessId);
         return orderMapper.toResponseList(orders);
     }
-    public Page<OrderResponse> getOrdersByBusiness(Long businessId, Pageable pageable) {
+
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getOrdersByBusiness(@NotNull @Positive Long businessId, Pageable pageable) {
         Page<Order> orders = orderRepository.findByBusinessId(businessId, pageable);
         return orders.map(orderMapper::toResponse);
     }
 
-    @Transactional
-    public OrderResponse confirmOrder(Long orderId) {
+    public OrderResponse confirmOrder(@NotNull @Positive Long orderId) {
         Order order = getOrderEntity(orderId);
 
-        if (order.getStatus() != OrderStatus.PENDING) {
+        if (!order.canBeConfirmed()) {
             throw new InvalidOrderStatusException("Order cannot be confirmed in current status: " + order.getStatus());
         }
 
@@ -103,11 +118,10 @@ public class OrderService {
         return orderMapper.toResponse(savedOrder);
     }
 
-    @Transactional
-    public OrderResponse dispatchOrder(Long orderId, Long deliveryPersonId) {
+    public OrderResponse dispatchOrder(@NotNull @Positive Long orderId, @NotNull @Positive Long deliveryPersonId) {
         Order order = getOrderEntity(orderId);
 
-        if (order.getStatus() != OrderStatus.CONFIRMED) {
+        if (!order.canBeDispatched()) {
             throw new InvalidOrderStatusException("Order cannot be dispatched in current status: " + order.getStatus());
         }
 
@@ -121,11 +135,10 @@ public class OrderService {
         return orderMapper.toResponse(savedOrder);
     }
 
-    @Transactional
-    public OrderResponse deliverOrder(Long orderId) {
+    public OrderResponse deliverOrder(@NotNull @Positive Long orderId) {
         Order order = getOrderEntity(orderId);
 
-        if (order.getStatus() != OrderStatus.OUT_FOR_DELIVERY) {
+        if (!order.canBeDelivered()) {
             throw new InvalidOrderStatusException("Order cannot be delivered in current status: " + order.getStatus());
         }
 
@@ -142,11 +155,10 @@ public class OrderService {
         return orderMapper.toResponse(savedOrder);
     }
 
-    @Transactional
-    public OrderResponse cancelOrder(Long orderId, String cancellationReason) {
+    public OrderResponse cancelOrder(@NotNull @Positive Long orderId, @NotNull String cancellationReason) {
         Order order = getOrderEntity(orderId);
 
-        if (order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.CANCELLED) {
+        if (!order.canBeCancelled()) {
             throw new InvalidOrderStatusException("Order cannot be cancelled in current status: " + order.getStatus());
         }
 
@@ -160,21 +172,61 @@ public class OrderService {
         return orderMapper.toResponse(savedOrder);
     }
 
-    public List<OrderResponse> getOrdersByStatus(OrderStatus status) {
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrdersByStatus(@NotNull OrderStatus status) {
         List<Order> orders = orderRepository.findByStatus(status);
         return orderMapper.toResponseList(orders);
     }
 
-    public Long getBusinessOrderCount(Long businessId, OrderStatus status) {
+    @Transactional(readOnly = true)
+    public Long getBusinessOrderCount(@NotNull @Positive Long businessId, @NotNull OrderStatus status) {
         return orderRepository.countByBusinessIdAndStatus(businessId, status);
     }
 
-    public Double getBusinessRevenue(Long businessId) {
+    @Transactional(readOnly = true)
+    public BigDecimal getBusinessRevenue(@NotNull @Positive Long businessId) {
         return orderRepository.getTotalRevenueByBusinessId(businessId);
     }
 
+    // Private helper methods
     private Order getOrderEntity(Long orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
+    }
+
+    private void validateOrderRequest(OrderCreateRequest request) {
+        // Validate total amount calculation
+        BigDecimal calculatedTotal = request.getSubtotal()
+                .add(request.getTaxAmount() != null ? request.getTaxAmount() : BigDecimal.ZERO)
+                .add(request.getDeliveryCharges() != null ? request.getDeliveryCharges() : BigDecimal.ZERO)
+                .subtract(request.getDiscountAmount() != null ? request.getDiscountAmount() : BigDecimal.ZERO);
+
+        if (calculatedTotal.compareTo(request.getTotalAmount()) != 0) {
+            throw new InvalidOrderStatusException("Total amount calculation mismatch. Expected: " + calculatedTotal + ", Provided: " + request.getTotalAmount());
+        }
+
+        // Validate items total matches subtotal
+        BigDecimal itemsTotal = request.getItems().stream()
+                .map(item -> item.getTotalPrice())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (itemsTotal.compareTo(request.getSubtotal()) != 0) {
+            throw new InvalidOrderStatusException("Items total does not match subtotal. Items total: " + itemsTotal + ", Subtotal: " + request.getSubtotal());
+        }
+
+        // Validate each item's total price
+        request.getItems().forEach(item -> {
+            BigDecimal itemTotal = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()))
+                    .subtract(item.getDiscountAmount() != null ? item.getDiscountAmount() : BigDecimal.ZERO);
+
+            if (itemTotal.compareTo(item.getTotalPrice()) != 0) {
+                throw new InvalidOrderStatusException("Item total price calculation error for product: " + item.getProductName());
+            }
+        });
+
+        // Validate scheduled delivery time if provided
+        if (request.getScheduledAt() != null && request.getScheduledAt().isBefore(LocalDateTime.now())) {
+            throw new InvalidOrderStatusException("Scheduled delivery time cannot be in the past");
+        }
     }
 }
