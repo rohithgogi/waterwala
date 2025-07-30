@@ -18,7 +18,6 @@ userservice\model\UserSession$UserSessionBuilder.class
 userservice\service\UserSessionService.class
 userservice\model\OTP.class
 userservice\dto\UserLoginDto.class
-userservice\service\OTPService$OTPServiceBuilder.class
 userservice\enums\UserRole.class
 userservice\enums\OTPStatus.class
 userservice\model\OTP$OTPBuilder.class

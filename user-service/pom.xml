@@ -69,12 +69,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- MANDATORY: SMS Service for OTP -->
-        <dependency>
-            <groupId>com.twilio.sdk</groupId>
-            <artifactId>twilio</artifactId>
-            <version>9.14.1</version>
-        </dependency>
+
 
         <!-- MANDATORY: Development Tools -->
         <dependency>
@@ -91,12 +86,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- MANDATORY: In-memory DB for Testing -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
+
 
         <!-- Lombok -->
         <dependency>
@@ -109,6 +99,9 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
+
+
+
     </dependencies>
 
     <build>

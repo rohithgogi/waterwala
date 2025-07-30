@@ -7,22 +7,21 @@ import orderservice.model.OrderItem;
 import orderservice.model.OrderStatus;
 import orderservice.model.OrderItemStatus;
 import orderservice.model.PaymentStatus;
+import orderservice.model.AddressType;
 import org.mapstruct.*;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring",
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-@Component
 public interface OrderMapper {
 
     // Order mappings
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "orderNumber", ignore = true) // Will be set by service
-    @Mapping(target = "status", constant = "PENDING")
-    @Mapping(target = "paymentStatus", constant = "PENDING")
+    @Mapping(target = "status", expression = "java(orderservice.model.OrderStatus.PENDING)")
+    @Mapping(target = "paymentStatus", expression = "java(orderservice.model.PaymentStatus.PENDING)")
     @Mapping(target = "confirmedAt", ignore = true)
     @Mapping(target = "dispatchedAt", ignore = true)
     @Mapping(target = "deliveredAt", ignore = true)
@@ -46,7 +45,7 @@ public interface OrderMapper {
     // OrderItem mappings
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "order", ignore = true) // Will be set by service
-    @Mapping(target = "status", constant = "PENDING")
+    @Mapping(target = "status", expression = "java(orderservice.model.OrderItemStatus.PENDING)")
     @Mapping(target = "createdAt", ignore = true) // Auto-generated
     OrderItem toItemEntity(CreateOrderItemRequest request);
 
@@ -58,7 +57,7 @@ public interface OrderMapper {
     // DeliveryAddress mappings
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "order", ignore = true) // Will be set by service
-    @Mapping(target = "addressType", constant = "HOME") // Default value
+    @Mapping(target = "addressType", expression = "java(orderservice.model.AddressType.HOME)")
     OrderDeliveryAddress toAddressEntity(CreateDeliveryAddressRequest request);
 
     OrderDeliveryAddressResponse toAddressResponse(OrderDeliveryAddress address);

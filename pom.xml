@@ -17,7 +17,6 @@
 
     <modules>
         <module>discovery-service</module>
-        <module>config-servers</module>
         <module>api-gateway</module>
         <module>user-service</module>
         <module>shared-libraries/common-dto</module>
@@ -38,7 +37,17 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- ✅ Spring Cloud BOM -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2023.0.1</version> <!-- compatible with Spring Boot 3.2.5 -->
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
+
+
     </dependencyManagement>
 
 
