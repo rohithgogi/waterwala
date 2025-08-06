@@ -9,11 +9,13 @@ import org.springframework.stereotype.Component;
 import userservice.enums.UserRole;
 
 import javax.crypto.SecretKey;
+import java.security.Key;
 import java.util.Date;
 
 @Component
 @Slf4j
 public class JwtTokenProvider {
+
     private final SecretKey key;
     private final int jwtExpirationInMs;
 

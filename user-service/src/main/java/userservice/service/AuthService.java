@@ -22,7 +22,7 @@ import userservice.security.JwtTokenProvider;
 public class AuthService {
     private final UserRepository userRepository;
     private final UserService userService;
-    private  final OTPService otpService;
+    private final OTPService otpService;
     private final UserSessionService sessionService;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -44,7 +44,6 @@ public class AuthService {
             log.info("User found: {}", user.getId());
 
             String jwt = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
-
             if (user.getStatus() == UserStatus.SUSPENDED) {
                 throw new InvalidCredentialsException("Account suspended");
             }
