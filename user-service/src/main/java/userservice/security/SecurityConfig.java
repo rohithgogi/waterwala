@@ -35,15 +35,57 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints - no authentication required
                         .requestMatchers(
-                                "/api/v1/auth/**",
+                                "/api/v1/auth/send-otp",
+                                "/api/v1/auth/login",
+
+                                "/api/v1/users/register",
+
+                                "/api/v1/otp/send/**",
+                                "/api/v1/otp/verify",
+                                "/api/v1/otp/status",
+
                                 "/api/v1/users/**",
                                 "/api/v1/users/exists/**",
-                                "/api/v1/otp/**",
-                                "/api/v1/sessions/create",
-                                "/api/v1/sessions/refresh"
+
+                                "/api/v1/sessions/create",//session management endpoints
+                                "/api/v1/sessions/refresh",
+                                "/api/v1/sessions/validate",
+
+                                "/swagger-ui/**",//swagger endpoints
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/webjars/**",
+                                "/swagger-resources/**"
                         ).permitAll()
 
-                        // All other requests require authentication
+                        .requestMatchers(
+                                "/api/v1/users",
+                                "/api/v1/users/status/**",
+                                "/api/v1/users/role/**"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                "/api/v1/users/phone/**",
+                                "/api/v1/users/email/**",
+                                "/api/v1/users/exists/**"
+                        ).hasAnyRole("BUSINESS_OWNER", "ADMIN")
+
+                        .requestMatchers(
+                                "/api/v1/users/id/**",
+                                "/api/v1/users/*/verify-phone",
+                                "/api/v1/users/*/verify-email",
+                                "/api/v1/users/*/last-login"
+                        ).hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
+
+                        .requestMatchers("/api/v1/users/*").hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
+
+                        .requestMatchers("/api/v1/users/*/status").hasRole("ADMIN")
+
+                        .requestMatchers("/api/v1/addresses/**").hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
+
+                        .requestMatchers("/api/v1/sessions/**").hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
+
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
