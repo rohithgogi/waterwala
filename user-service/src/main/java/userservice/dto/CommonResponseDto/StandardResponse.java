@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ApiResponse<T> {
+public class StandardResponse<T> {
 
     private Boolean success;
     private String message;
@@ -19,8 +19,8 @@ public class ApiResponse<T> {
     private String errorCode;
     private LocalDateTime timestamp;
 
-    public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder()
+    public static <T> StandardResponse<T> success(T data) {
+        return StandardResponse.<T>builder()
                 .success(true)
                 .message("Operation completed successfully")
                 .data(data)
@@ -28,8 +28,8 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> success(String message, T data) {
-        return ApiResponse.<T>builder()
+    public static <T> StandardResponse<T> success(String message, T data) {
+        return StandardResponse.<T>builder()
                 .success(true)
                 .message(message)
                 .data(data)
@@ -37,16 +37,16 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> success(String message) {
-        return ApiResponse.<T>builder()
+    public static <T> StandardResponse<T> success(String message) {
+        return StandardResponse.<T>builder()
                 .success(true)
                 .message(message)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(String message, T data) {
-        return ApiResponse.<T>builder()
+    public static <T> StandardResponse<T> error(String message, T data) {
+        return StandardResponse.<T>builder()
                 .success(false)
                 .message(message)
                 .data(data)
@@ -54,8 +54,8 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(String message, String errorCode) {
-        return ApiResponse.<T>builder()
+    public static <T> StandardResponse<T> error(String message, String errorCode) {
+        return StandardResponse.<T>builder()
                 .success(false)
                 .message(message)
                 .errorCode(errorCode)

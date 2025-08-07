@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
-import userservice.dto.CommonResponseDto.ApiResponse;
+import userservice.dto.CommonResponseDto.StandardResponse;
 
 import java.io.IOException;
 
@@ -35,7 +35,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-        ApiResponse<Object> errorResponse=ApiResponse.error("Authentication required",null);
+        StandardResponse<Object> errorResponse= StandardResponse.error("Authentication required",null);
 
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
     }

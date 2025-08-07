@@ -1,8 +1,11 @@
 package userservice.enums;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
+@AllArgsConstructor
 public enum UserRole {
     CUSTOMER("Customer"),
     BUSINESS_OWNER("Business Owner"),
@@ -10,9 +13,9 @@ public enum UserRole {
 
     private final String displayName;
 
-    UserRole(String displayName) {
-        this.displayName = displayName;
-    }
+//    UserRole(String displayName) {
+//        this.displayName = displayName;
+//    }
 }
 
 
