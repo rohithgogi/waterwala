@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import userservice.dto.AddressDto;
 import userservice.dto.AddressResponseDto;
@@ -39,6 +40,7 @@ public class AddressController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
+    @PreAuthorize("@securityService.canModifyAddresses(#userId)")
     public ResponseEntity<StandardResponse<AddressResponseDto>> addAddress(@Parameter(description = "User ID") @PathVariable Long userId, @Valid @RequestBody AddressDto addressDto){
         AddressResponseDto address= addressService.addAddress(userId,addressDto);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -55,6 +57,7 @@ public class AddressController {
             @ApiResponse(responseCode = "404", description = "Address not found"),
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
+    @PreAuthorize("@securityService.ownsAddress(#addressId)")
     public ResponseEntity<StandardResponse<AddressResponseDto>> updateAddress(@Parameter(description = "Address ID") @PathVariable Long addressId, @Valid @RequestBody AddressDto addressDto){
         AddressResponseDto address=addressService.updateAddress(addressId,addressDto);
         return ResponseEntity.ok(StandardResponse.success("Address updated successfully",address));
@@ -69,6 +72,7 @@ public class AddressController {
             @ApiResponse(responseCode = "200", description = "Address deleted successfully"),
             @ApiResponse(responseCode = "404", description = "Address not found")
     })
+    @PreAuthorize("@securityService.ownsAddress(#addreddId)")
     public ResponseEntity<StandardResponse<String>> deleteAddress( @Parameter(description = "Address ID") @PathVariable Long addressId){
         addressService.deleteAddress(addressId);
         return ResponseEntity.ok(StandardResponse.success("Address deleted successfully"));
@@ -83,6 +87,7 @@ public class AddressController {
             @ApiResponse(responseCode = "200", description = "Default address updated successfully"),
             @ApiResponse(responseCode = "404", description = "Address not found")
     })
+    @PreAuthorize("@securityService.ownsAddress(#AddressId)")
     public ResponseEntity<StandardResponse<AddressResponseDto>> setDefaultAddress(@Parameter(description = "Address ID")@PathVariable Long addressId){
         addressService.setDefaultAddress(addressId);
         return ResponseEntity.ok(StandardResponse.success("Default address updated successfully"));
@@ -97,6 +102,7 @@ public class AddressController {
             @ApiResponse(responseCode = "200", description = "Addresses retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
+    @PreAuthorize("@securityService.canAccessAddresses(#userId)")
     public ResponseEntity<StandardResponse<List<AddressResponseDto>>> getAllAddressesOfUser(@Parameter(description = "User ID") @PathVariable Long userId){
         List<AddressResponseDto> addresses=addressService.getAllAddresses(userId);
         return ResponseEntity.ok(StandardResponse.success("Addresses retrieved successfully",addresses));
@@ -111,6 +117,7 @@ public class AddressController {
             @ApiResponse(responseCode = "200", description = "Default addresses retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Address not found")
     })
+    @PreAuthorize("@securityService.canAccessAddresses(#userId)")
     public ResponseEntity<StandardResponse<AddressResponseDto>> getDefaultAddress(@Parameter(description = "User ID") @PathVariable Long userId){
         AddressResponseDto address=addressService.getDefaultAddress(userId);
         return ResponseEntity.ok(StandardResponse.success("Default address retrieved successfully",address));
@@ -125,6 +132,7 @@ public class AddressController {
             @ApiResponse(responseCode = "200", description = "Addresses retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Address not found")
     })
+    @PreAuthorize("@securityService.ownsAddress(#addressId)")
     public ResponseEntity<StandardResponse<AddressResponseDto>> getAddressById(@PathVariable Long addressId){
         AddressResponseDto address= addressService.getAddressById(addressId);
         return ResponseEntity.ok(StandardResponse.success("Address retrieved successfully",address));

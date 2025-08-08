@@ -11,7 +11,6 @@ import userservice.model.Address;
 import userservice.model.User;
 import userservice.repository.AddressRepository;
 import userservice.repository.UserRepository;
-import userservice.security.SecurityHelper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,7 +20,8 @@ import java.util.stream.Collectors;
 public class AddressService {
     private final AddressRepository addressRepository;
     private final UserRepository userRepository;
-    private final SecurityHelper securityHelper;
+    private final SecurityService securityService;
+
     @PreAuthorize("hasRole('ADMIN') or (hasAnyRole('BUSINESS_OWNER', 'CUSTOMER') and #userId==authentication.principal)")
     public AddressResponseDto addAddress(Long userId, AddressDto addressDto){
         User user=userRepository.findById(userId)
@@ -73,9 +73,7 @@ public class AddressService {
         return convertToResponseDto(updatedAddress);
     }
 
-    public boolean isAddressOwner(Long addressId, Long userId) {
-        return securityHelper.isAddressOwner(addressId, userId);
-    }
+
     @PreAuthorize("hasRole('ADMIN') or @addressService.isAddressOwner(#addressId, authentication.principal)")
     public void deleteAddress(Long addressId){
         Address address=addressRepository.findById(addressId)

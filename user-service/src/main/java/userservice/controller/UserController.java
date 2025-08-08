@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import userservice.dto.CommonResponseDto.StandardResponse;
 import userservice.dto.UserRegistrationDto;
@@ -49,6 +50,7 @@ public class UserController {
 
     @GetMapping("/id/{userId}")
     @Operation(summary = "Get user by ID", description = "Retrieves user information by user ID")
+    @PreAuthorize("@securityService.canAccessUserData(#userId)")
     public ResponseEntity<StandardResponse<UserResponseDto>> getUserById(
             @Parameter(description = "User ID") @PathVariable Long userId) {
         UserResponseDto user = service.getUserById(userId);
@@ -57,6 +59,7 @@ public class UserController {
 
     @GetMapping("/email/{email}")
     @Operation(summary = "Get user by email", description = "Retrieves user information by email address")
+    @PreAuthorize("@securityService.isBusinessOwnerOrAdmin()")
     public ResponseEntity<StandardResponse<UserResponseDto>> getUserByEmail(
             @Parameter(description = "User email") @PathVariable String email) {
         UserResponseDto user = service.getUserByEmail(email);
@@ -65,6 +68,7 @@ public class UserController {
 
     @GetMapping("/phone/{phone}")
     @Operation(summary = "Get user by phone", description = "Retrieves user information by phone number")
+    @PreAuthorize("@securityService.isBusinessOwnerOrAdmin()")
     public ResponseEntity<StandardResponse<UserResponseDto>> getUserByPhone(
             @Parameter(description = "Phone number") @PathVariable String phone) {
         UserResponseDto user = service.getUserByPhone(phone);
@@ -73,6 +77,7 @@ public class UserController {
 
     @PutMapping("/{userId}")
     @Operation(summary = "Update user", description = "Updates user profile information")
+    @PreAuthorize("@securityService.canModifyUserData(#userId)")
     public ResponseEntity<StandardResponse<UserResponseDto>> updateUser(
             @Parameter(description = "User ID") @PathVariable Long userId,
             @Valid @RequestBody UserUpdateDto updateDto) {
@@ -82,6 +87,7 @@ public class UserController {
 
     @PatchMapping("/{userId}/status")
     @Operation(summary = "Update user status", description = "Updates the status of a user (ACTIVE, INACTIVE, SUSPENDED)")
+    @PreAuthorize("@securityService.isAdmin()")
     public ResponseEntity<StandardResponse<UserResponseDto>> updateUserStatus(
             @Parameter(description = "User ID") @PathVariable Long userId,
             @Parameter(description = "New status") @RequestParam UserStatus status) {
@@ -92,6 +98,7 @@ public class UserController {
     @PatchMapping("/{userId}/verify-email")
     @Operation(summary = "Verify email", description = "Marks user's email as verified")
     @SecurityRequirement(name = "")
+    @PreAuthorize("@securityService.canAccessUserData(#userId)")
     public ResponseEntity<StandardResponse<UserResponseDto>> verifyEmail(
             @Parameter(description = "User ID") @PathVariable Long userId) {
         service.verifyEmail(userId);
@@ -101,6 +108,7 @@ public class UserController {
     @PatchMapping("/{userId}/verify-phone")
     @Operation(summary = "Verify phone", description = "Marks user's phone number as verified")
     @SecurityRequirement(name = "")
+    @PreAuthorize("@securityService.canAccessUserData(#userId)")
     public ResponseEntity<StandardResponse<UserResponseDto>> verifyPhone(
             @Parameter(description = "User ID") @PathVariable Long userId) {
         service.verifyPhone(userId);
@@ -109,6 +117,7 @@ public class UserController {
 
     @PatchMapping("/{userId}/last-login")
     @Operation(summary = "Update last login", description = "Updates the user's last login timestamp")
+    @PreAuthorize("@securityService.canAccessUserData(#userId)")
     public ResponseEntity<StandardResponse<UserResponseDto>> updateLastLogin(
             @Parameter(description = "User ID") @PathVariable Long userId) {
         service.updateLastLogin(userId);
@@ -117,6 +126,7 @@ public class UserController {
 
     @GetMapping
     @Operation(summary = "Get all users", description = "Retrieves paginated list of all users. Requires admin privileges.")
+    @PreAuthorize("@securityService.isAdmin()")
     public ResponseEntity<StandardResponse<Page<UserResponseDto>>> getAllUsers(@PageableDefault(size = 20) Pageable pageable) {
         Page<UserResponseDto> users = service.getAllUsers(pageable);
         return ResponseEntity.ok(StandardResponse.success("Users retrieved successfully", users));
@@ -124,6 +134,7 @@ public class UserController {
 
     @GetMapping("/role/{role}")
     @Operation(summary = "Get users by role", description = "Retrieves users filtered by role")
+    @PreAuthorize("@securityService.isAdmin()")
     public ResponseEntity<StandardResponse<Page<UserResponseDto>>> getUsersByRole(
             @Parameter(description = "User role") @PathVariable UserRole role,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -133,6 +144,7 @@ public class UserController {
 
     @GetMapping("/status/{status}")
     @Operation(summary = "Get users by status", description = "Retrieves users filtered by status")
+    @PreAuthorize("@securityService.isAdmin()")
     public ResponseEntity<StandardResponse<Page<UserResponseDto>>> getUsersByStatus(
             @Parameter(description = "User status") @PathVariable UserStatus status,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -143,6 +155,7 @@ public class UserController {
     @GetMapping("/exists/email/{email}")
     @Operation(summary = "Check email existence", description = "Checks if an email is already registered")
     @SecurityRequirement(name = "")
+    @PreAuthorize("@securityService.isBusinessOwnerOrAdmin()")
     public ResponseEntity<StandardResponse<Boolean>> checkEmailExists(
             @Parameter(description = "Email to check") @PathVariable String email) {
         boolean exists = service.existsByEmail(email);
@@ -152,6 +165,7 @@ public class UserController {
     @GetMapping("/exists/phone/{phone}")
     @Operation(summary = "Check phone existence", description = "Checks if a phone number is already registered")
     @SecurityRequirement(name = "")
+    @PreAuthorize("@securityService.isBusinessOwnerOrAdmin()")
     public ResponseEntity<StandardResponse<Boolean>> checkPhoneExists(
             @Parameter(description = "Phone number to check") @PathVariable String phone) {
         boolean exists = service.existsByPhone(phone);
