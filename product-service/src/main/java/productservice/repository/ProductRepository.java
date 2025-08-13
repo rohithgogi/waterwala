@@ -1,10 +1,11 @@
+// ProductRepository.java
 package productservice.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.stereotype.Repository;
 import productservice.model.Product;
 import productservice.model.ProductCategory;
 import productservice.model.ProductType;
@@ -13,13 +14,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-public interface ProductRepository extends JpaRepository<Product, Long> {
+@Repository
+public interface ProductRepository extends MongoRepository<Product, String> {
 
-    List<Product> findByBusinessId(Long businessId);
+    List<Product> findByBusinessId(String businessId);
 
-    List<Product> findByBusinessIdAndIsActiveTrue(Long businessId);
-
-    List<Product> findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(Long businessId);
+    List<Product> findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(String businessId);
 
     List<Product> findByCategoryAndIsActiveTrueAndIsAvailableTrue(ProductCategory category);
 
@@ -27,54 +27,69 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findBySku(String sku);
 
-    List<Product> findByNameContainingIgnoreCaseAndIsActiveTrueAndIsAvailableTrue(String name);
+    List<Product> findByNameRegexAndIsActiveTrueAndIsAvailableTrue(String nameRegex);
 
-    //products in price range
-    @Query("SELECT p FROM Product p WHERE p.isActive=true AND p.isAvailable=true "+
-    "AND p.basePrice BETWEEN :minPrice AND :maxPrice")
-    List<Product> findProductsInPriceRange(@Param("minPrice")BigDecimal minPrice, @Param("maxPrice") BigDecimal maxPrice);
+    // Products in price range
+    @Query("{ 'isActive': true, 'isAvailable': true, 'basePrice': { $gte: ?0, $lte: ?1 } }")
+    List<Product> findProductsInPriceRange(BigDecimal minPrice, BigDecimal maxPrice);
 
-    //find products by category and business
-    List<Product> findByCategoryAndBusinessIdAndIsActiveTrueAndIsAvailableTrue(ProductCategory category, Long businessId);
+    // Find products by category and business
+    List<Product> findByCategoryAndBusinessIdAndIsActiveTrueAndIsAvailableTrue(
+            ProductCategory category, String businessId);
 
-    //pagination
+    // Pagination queries
     Page<Product> findByIsActiveTrueAndIsAvailableTrue(Pageable pageable);
 
-    //find products by category with pagination
-    Page<Product> findByCategoryAndIsActiveTrueAndIsAvailableTrue(ProductCategory category, Pageable pageable);
+    Page<Product> findByCategoryAndIsActiveTrueAndIsAvailableTrue(
+            ProductCategory category, Pageable pageable);
 
-    //Search products by name and description
-    @Query("SELECT p FROM Product p WHERE p.isActive=true AND p.isAvailable=true "+
-            "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) "+
-            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<Product> searchAvailableActiveProducts(@Param("searchTerm") String searchTerm, Pageable pageable);
+    Page<Product> findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(
+            String businessId, Pageable pageable);
 
-    //find products by business with pagination
-    Page<Product> findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(Long businessId, Pageable pageable);
+    // Search products by name and description
+    @Query("{ 'isActive': true, 'isAvailable': true, " +
+            "$or: [" +
+            "  { 'name': { $regex: ?0, $options: 'i' } }," +
+            "  { 'description': { $regex: ?0, $options: 'i' } }" +
+            "] }")
+    List<Product> searchAvailableActiveProducts(String searchTerm);
 
-    //count products by business
-    long countByBusinessIdAndIsActiveTrue(Long businessId);
+    // Count products by business
+    long countByBusinessIdAndIsActiveTrue(String businessId);
 
-    //find products by brand
+    // Find products by brand
     List<Product> findByBrandAndIsActiveTrueAndIsAvailableTrue(String brand);
 
-    //find products with low stock
-    @Query("SELECT p FROM Product p JOIN ProductInventory pi ON p.id=pi.product.id"+
-        " WHERE p.isActive=true AND pi.currentStock <= pi.reorderPoint")
+    // Find products with low stock
+    @Query("{ 'isActive': true, 'inventory.currentStock': { $lte: '$inventory.reorderPoint' } }")
     List<Product> findProductsWithLowStock();
 
     // Check if SKU exists for different product
-    boolean existsBySkuAndIdNot(String sku, Long id);
+    boolean existsBySkuAndIdNot(String sku, String id);
 
     // Find products by multiple categories
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isAvailable = true " +
-            "AND p.category IN :categories")
-    List<Product> findByMultipleCategories(@Param("categories") List<ProductCategory> categories);
+    @Query("{ 'isActive': true, 'isAvailable': true, 'category': { $in: ?0 } }")
+    List<Product> findByMultipleCategories(List<ProductCategory> categories);
 
-    // Find featured products (could be based on criteria like high rating, popular, etc.)
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isAvailable = true " +
-            "ORDER BY p.createdAt DESC")
+    // Find latest products
+    @Query(value = "{ 'isActive': true, 'isAvailable': true }", sort = "{ 'createdAt': -1 }")
     List<Product> findLatestProducts(Pageable pageable);
 
+    // Check if product has sufficient stock
+    @Query("{ '_id': ?0, 'inventory.currentStock': { $gte: ?1 } }")
+    Optional<Product> findByIdWithSufficientStock(String productId, Integer requiredQuantity);
 
+    // Find products by business with stock below reorder point
+    @Query("{ 'businessId': ?0, 'isActive': true, " +
+            "'inventory.currentStock': { $lte: '$inventory.reorderPoint' } }")
+    List<Product> findLowStockProductsByBusiness(String businessId);
+
+    // Aggregation for top selling products (placeholder - would need sales data)
+    @Query(value = "{ 'businessId': ?0, 'isActive': true, 'isAvailable': true }",
+            sort = "{ 'createdAt': -1 }")
+    List<Product> findTopSellingProductsByBusiness(String businessId, Pageable pageable);
+
+    // Text search across multiple fields
+    @Query("{ $text: { $search: ?0 }, 'isActive': true, 'isAvailable': true }")
+    List<Product> findByTextSearch(String searchText);
 }

@@ -5,6 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import productservice.dto.ProductCreateRequest;
@@ -14,48 +18,47 @@ import productservice.exceptions.*;
 import productservice.mapper.ProductMapper;
 import productservice.model.Product;
 import productservice.model.ProductCategory;
-import productservice.model.ProductInventory;
 import productservice.model.ProductType;
-import productservice.repository.ProductInventoryRepository;
 import productservice.repository.ProductRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ProductServiceImpl implements ProductService{
+public class ProductServiceImpl implements ProductService {
+
     private final ProductRepository productRepository;
-    private final ProductInventoryRepository inventoryRepository;
     private final ProductMapper productMapper;
+    private final MongoTemplate mongoTemplate;
 
-    public ProductResponse createProduct(ProductCreateRequest request){
-        log.info("Creating product with SKU: {}",request.getSku());
+    @Override
+    public ProductResponse createProduct(ProductCreateRequest request) {
+        log.info("Creating product with SKU: {}", request.getSku());
 
-        if(productRepository.findBySku(request.getSku()).isPresent()){
+        if (productRepository.findBySku(request.getSku()).isPresent()) {
             throw new DuplicateSkuException(request.getSku());
         }
+
         validateProductData(request);
 
-        try{
-            Product product=productMapper.toEntity(request);
-            Product savedProduct=productRepository.save(product);
+        try {
+            Product product = productMapper.toEntity(request);
+            Product savedProduct = productRepository.save(product);
 
-            ProductInventory inventory=createInventoryRecord(savedProduct, request);
-            inventoryRepository.save(inventory);
-
-            log.info("Product created successfully with ID: {}",savedProduct.getId());
-            return productMapper.toResponseWithInventory(savedProduct, inventory);
-        }catch(Exception e){
+            log.info("Product created successfully with ID: {}", savedProduct.getId());
+            return productMapper.toResponse(savedProduct);
+        } catch (Exception e) {
             log.error("Error creating product: {}", e.getMessage(), e);
             throw new ProductServiceException("Failed to create product", e);
         }
     }
 
-    public ProductResponse updateProduct(Long id, ProductUpdateRequest request){
+    @Override
+    public ProductResponse updateProduct(String id, ProductUpdateRequest request) {
         log.info("Updating product with ID: {}", id);
 
         Product product = findProductById(id);
@@ -67,16 +70,14 @@ public class ProductServiceImpl implements ProductService{
 
         // Validate business logic
         validateProductUpdateData(request);
+
         try {
             // Update product entity
             productMapper.updateEntity(product, request);
             Product updatedProduct = productRepository.save(product);
 
-            // Get inventory for response
-            Optional<ProductInventory> inventory = inventoryRepository.findProductById(id);
-
             log.info("Product updated successfully with ID: {}", id);
-            return productMapper.toResponseWithInventory(updatedProduct, inventory.orElse(null));
+            return productMapper.toResponse(updatedProduct);
 
         } catch (Exception e) {
             log.error("Error updating product: {}", e.getMessage(), e);
@@ -84,91 +85,93 @@ public class ProductServiceImpl implements ProductService{
         }
     }
 
-    public void deleteProduct(Long id){
+    @Override
+    public void deleteProduct(String id) {
         log.info("Deleting product with ID: {}", id);
-        Product product=findProductById(id);
+        Product product = findProductById(id);
 
-        try{
-
-            //first delete inventory(foreign key constraint)
-            inventoryRepository.deleteByProductId(id);
+        try {
             productRepository.delete(product);
             log.info("Product deleted successfully with ID: {}", id);
-        }catch(Exception e){
-            log.error("Error deleting product: {}",e.getMessage(),e);
+        } catch (Exception e) {
+            log.error("Error deleting product: {}", e.getMessage(), e);
             throw new ProductServiceException("Failed to delete product", e);
         }
     }
 
     @Override
-    public void toggleProductStatus(Long id, boolean isActive) {
+    public void toggleProductStatus(String id, boolean isActive) {
         log.info("Toggling product status for ID: {} to {}", id, isActive);
 
-        Product product = findProductById(id);
-        product.setIsActive(isActive);
-        productRepository.save(product);
+        try {
+            Query query = new Query(Criteria.where("id").is(id));
+            Update update = new Update()
+                    .set("isActive", isActive)
+                    .set("updatedAt", LocalDateTime.now());
 
-        log.info("Product status updated successfully for ID: {}", id);
+            mongoTemplate.updateFirst(query, update, Product.class);
+            log.info("Product status updated successfully for ID: {}", id);
+        } catch (Exception e) {
+            log.error("Error updating product status: {}", e.getMessage(), e);
+            throw new ProductServiceException("Failed to update product status", e);
+        }
     }
 
     @Override
-    public void toggleProductAvailability(Long id, boolean isAvailable) {
+    public void toggleProductAvailability(String id, boolean isAvailable) {
         log.info("Toggling product availability for ID: {} to {}", id, isAvailable);
 
-        Product product = findProductById(id);
-        product.setIsAvailable(isAvailable);
-        productRepository.save(product);
+        try {
+            Query query = new Query(Criteria.where("id").is(id));
+            Update update = new Update()
+                    .set("isAvailable", isAvailable)
+                    .set("updatedAt", LocalDateTime.now());
 
-        log.info("Product availability updated successfully for ID: {}", id);
+            mongoTemplate.updateFirst(query, update, Product.class);
+            log.info("Product availability updated successfully for ID: {}", id);
+        } catch (Exception e) {
+            log.error("Error updating product availability: {}", e.getMessage(), e);
+            throw new ProductServiceException("Failed to update product availability", e);
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ProductResponse getProductById(Long id) {
+    public ProductResponse getProductById(String id) {
         log.debug("Getting product by ID: {}", id);
-
         Product product = findProductById(id);
-        Optional<ProductInventory> inventory = inventoryRepository.findProductById(id);
-
-        return productMapper.toResponseWithInventory(product, inventory.orElse(null));
+        return productMapper.toResponse(product);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ProductResponse getProductBySku(String sku) {
         log.debug("Getting product by SKU: {}", sku);
-
         Product product = productRepository.findBySku(sku)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found with SKU: " + sku));
-
-        Optional<ProductInventory> inventory = inventoryRepository.findProductById(product.getId());
-
-        return productMapper.toResponseWithInventory(product, inventory.orElse(null));
+        return productMapper.toResponse(product);
     }
 
     @Override
-    @Transactional
-    public List<ProductResponse> getProductByBusiness(Long businessId){
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getProductByBusiness(String businessId) {
         log.debug("Getting products by businessId: {}", businessId);
-
-        List<Product> products=productRepository.findByBusinessId(businessId);
+        List<Product> products = productRepository.findByBusinessId(businessId);
         return productMapper.toResponseList(products);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getActiveProductByBusiness(Long businessId) {
+    public List<ProductResponse> getActiveProductByBusiness(String businessId) {
         log.debug("Getting active products by business ID: {}", businessId);
-
-        List<Product> products = productRepository.findByBusinessIdAndIsActiveTrue(businessId);
+        List<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessId);
         return productMapper.toResponseList(products);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAvailableProductByBusiness(Long businessId) {
+    public List<ProductResponse> getAvailableProductByBusiness(String businessId) {
         log.debug("Getting available products by business ID: {}", businessId);
-
         List<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessId);
         return productMapper.toResponseList(products);
     }
@@ -177,7 +180,6 @@ public class ProductServiceImpl implements ProductService{
     @Transactional(readOnly = true)
     public List<ProductResponse> getProductByCategory(ProductCategory category) {
         log.debug("Getting products by category: {}", category);
-
         List<Product> products = productRepository.findByCategoryAndIsActiveTrueAndIsAvailableTrue(category);
         return productMapper.toResponseList(products);
     }
@@ -186,7 +188,6 @@ public class ProductServiceImpl implements ProductService{
     @Transactional(readOnly = true)
     public List<ProductResponse> getProductByType(ProductType type) {
         log.debug("Getting products by type: {}", type);
-
         List<Product> products = productRepository.findByTypeAndIsActiveTrueAndIsAvailableTrue(type);
         return productMapper.toResponseList(products);
     }
@@ -195,7 +196,6 @@ public class ProductServiceImpl implements ProductService{
     @Transactional(readOnly = true)
     public List<ProductResponse> getProductByBrand(String brand) {
         log.debug("Getting products by brand: {}", brand);
-
         List<Product> products = productRepository.findByBrandAndIsActiveTrueAndIsAvailableTrue(brand);
         return productMapper.toResponseList(products);
     }
@@ -204,8 +204,9 @@ public class ProductServiceImpl implements ProductService{
     @Transactional(readOnly = true)
     public List<ProductResponse> searchProductByName(String name) {
         log.debug("Searching products by name: {}", name);
-
-        List<Product> products = productRepository.findByNameContainingIgnoreCaseAndIsActiveTrueAndIsAvailableTrue(name);
+        // MongoDB regex search for case-insensitive matching
+        String regex = ".*" + name + ".*";
+        List<Product> products = productRepository.findByNameRegexAndIsActiveTrueAndIsAvailableTrue(regex);
         return productMapper.toResponseList(products);
     }
 
@@ -224,9 +225,8 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getProductByCategoryAndBusiness(ProductCategory category, Long businessId) {
+    public List<ProductResponse> getProductByCategoryAndBusiness(ProductCategory category, String businessId) {
         log.debug("Getting products by category: {} and business ID: {}", category, businessId);
-
         List<Product> products = productRepository.findByCategoryAndBusinessIdAndIsActiveTrueAndIsAvailableTrue(category, businessId);
         return productMapper.toResponseList(products);
     }
@@ -248,7 +248,6 @@ public class ProductServiceImpl implements ProductService{
     @Transactional(readOnly = true)
     public Page<ProductResponse> getAllAvailableProducts(Pageable pageable) {
         log.debug("Getting all available products with pagination");
-
         Page<Product> products = productRepository.findByIsActiveTrueAndIsAvailableTrue(pageable);
         return products.map(productMapper::toResponse);
     }
@@ -257,16 +256,14 @@ public class ProductServiceImpl implements ProductService{
     @Transactional(readOnly = true)
     public Page<ProductResponse> getProductsByCategory(ProductCategory category, Pageable pageable) {
         log.debug("Getting products by category: {} with pagination", category);
-
         Page<Product> products = productRepository.findByCategoryAndIsActiveTrueAndIsAvailableTrue(category, pageable);
         return products.map(productMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getProductsByBusiness(Long businessId, Pageable pageable) {
+    public Page<ProductResponse> getProductsByBusiness(String businessId, Pageable pageable) {
         log.debug("Getting products by business ID: {} with pagination", businessId);
-
         Page<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessId, pageable);
         return products.map(productMapper::toResponse);
     }
@@ -275,16 +272,23 @@ public class ProductServiceImpl implements ProductService{
     @Transactional(readOnly = true)
     public Page<ProductResponse> searchProducts(String searchTerm, Pageable pageable) {
         log.debug("Searching products with term: {}", searchTerm);
+        List<Product> products = productRepository.searchAvailableActiveProducts(searchTerm);
+        // Convert List to Page manually since MongoDB repository method returns List
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), products.size());
+        List<Product> pageContent = products.subList(start, end);
 
-        List<Product> products = productRepository.searchAvailableActiveProducts(searchTerm, pageable);
-        return Page.empty(); // Note: This method in repository returns List, not Page
+        return new org.springframework.data.domain.PageImpl<>(
+                productMapper.toResponseList(pageContent),
+                pageable,
+                products.size()
+        );
     }
 
     @Override
     @Transactional(readOnly = true)
-    public long countProductsByBusiness(Long businessId) {
+    public long countProductsByBusiness(String businessId) {
         log.debug("Counting products by business ID: {}", businessId);
-
         return productRepository.countByBusinessIdAndIsActiveTrue(businessId);
     }
 
@@ -292,7 +296,6 @@ public class ProductServiceImpl implements ProductService{
     @Transactional(readOnly = true)
     public List<ProductResponse> getLatestProducts(int limit) {
         log.debug("Getting latest {} products", limit);
-
         Pageable pageable = PageRequest.of(0, limit);
         List<Product> products = productRepository.findLatestProducts(pageable);
         return productMapper.toResponseList(products);
@@ -302,21 +305,22 @@ public class ProductServiceImpl implements ProductService{
     @Transactional(readOnly = true)
     public List<ProductResponse> getProductsWithLowStock() {
         log.debug("Getting products with low stock");
-
         List<Product> products = productRepository.findProductsWithLowStock();
         return productMapper.toResponseList(products);
     }
 
     @Override
-    public void updateProductStock(Long productId, int quantity) {
+    public void updateProductStock(String productId, int quantity) {
         log.info("Updating stock for product ID: {} by quantity: {}", productId, quantity);
 
-        if (!inventoryRepository.existsByProductId(productId)) {
-            throw new ProductNotFoundException("Product inventory not found for ID: " + productId);
-        }
-
         try {
-            inventoryRepository.updateCurrentStock(productId, quantity);
+            Query query = new Query(Criteria.where("id").is(productId));
+            Update update = new Update()
+                    .inc("inventory.currentStock", quantity)
+                    .set("inventory.lastUpdated", LocalDateTime.now())
+                    .set("updatedAt", LocalDateTime.now());
+
+            mongoTemplate.updateFirst(query, update, Product.class);
             log.info("Stock updated successfully for product ID: {}", productId);
 
         } catch (Exception e) {
@@ -326,99 +330,106 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public void reserveProductStock(Long productId, int quantity){
-        log.info("Reserving stock for productId {} quantity {}",productId,quantity);
+    public void reserveProductStock(String productId, int quantity) {
+        log.info("Reserving stock for productId {} quantity {}", productId, quantity);
 
-        if(!canFulfillOrder(productId,quantity)){
-            ProductInventory inventory=inventoryRepository.findProductById(productId)
-                    .orElseThrow(()->new ProductNotFoundException("Product inventory not found for ID: " + productId));
-            throw new InsufficientStockException(productId,quantity,inventory.getCurrentStock());
+        if (!canFulfillOrder(productId, quantity)) {
+            Product product = findProductById(productId);
+            int currentStock = product.getInventory() != null ? product.getInventory().getCurrentStock() : 0;
+            throw new InsufficientStockException(productId, quantity, currentStock);
         }
-         try{
-             inventoryRepository.updateCurrentStock(productId,-quantity);
-             inventoryRepository.updateReservedStock(productId,quantity);
 
-             log.info("Stock reserved successfully for productId: {}",productId);
-         }catch (Exception e){
-             log.error("Error reserving stock: {}",e.getMessage(), e);
-             throw  new ProductServiceException("Failed to reserve stock", e);
-         }
+        try {
+            Query query = new Query(Criteria.where("id").is(productId));
+            Update update = new Update()
+                    .inc("inventory.currentStock", -quantity)
+                    .inc("inventory.reservedStock", quantity)
+                    .set("inventory.lastUpdated", LocalDateTime.now())
+                    .set("updatedAt", LocalDateTime.now());
 
+            mongoTemplate.updateFirst(query, update, Product.class);
+            log.info("Stock reserved successfully for productId: {}", productId);
+
+        } catch (Exception e) {
+            log.error("Error reserving stock: {}", e.getMessage(), e);
+            throw new ProductServiceException("Failed to reserve stock", e);
+        }
     }
 
-    public void releaseProductStock(Long productId, int quantity){
-        log.info("Releasing product stock for productId: {} quantity: {}",productId, quantity);
+    @Override
+    public void releaseProductStock(String productId, int quantity) {
+        log.info("Releasing product stock for productId: {} quantity: {}", productId, quantity);
 
-        try{
-            inventoryRepository.updateReservedStock(productId,-quantity);
-            inventoryRepository.updateCurrentStock(productId,quantity);
-            log.info("Stock released successfully for productId: {}",productId);
-        }catch (Exception e){
-            log.error("Error in releasing stock: {}",e.getMessage(),e);
+        try {
+            Query query = new Query(Criteria.where("id").is(productId));
+            Update update = new Update()
+                    .inc("inventory.reservedStock", -quantity)
+                    .inc("inventory.currentStock", quantity)
+                    .set("inventory.lastUpdated", LocalDateTime.now())
+                    .set("updatedAt", LocalDateTime.now());
+
+            mongoTemplate.updateFirst(query, update, Product.class);
+            log.info("Stock released successfully for productId: {}", productId);
+
+        } catch (Exception e) {
+            log.error("Error releasing stock: {}", e.getMessage(), e);
             throw new ProductServiceException("Failed to release stock", e);
         }
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean isProductInStock(Long productId, int requiredQuantity) {
+    public boolean isProductInStock(String productId, int requiredQuantity) {
         log.debug("Checking if product ID: {} has sufficient stock for quantity: {}", productId, requiredQuantity);
-        return inventoryRepository.hasSufficientStock(productId, requiredQuantity);
+        return productRepository.findByIdWithSufficientStock(productId, requiredQuantity).isPresent();
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean isSkuUnique(String sku) {
         log.debug("Checking if SKU is unique: {}", sku);
-
         return productRepository.findBySku(sku).isEmpty();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean isSkuUniqueForUpdate(String sku, Long productId) {
+    public boolean isSkuUniqueForUpdate(String sku, String productId) {
         log.debug("Checking if SKU is unique for update: {} excluding product ID: {}", sku, productId);
-
         return !productRepository.existsBySkuAndIdNot(sku, productId);
     }
 
-
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getTopSellingProducts(Long businessId, int limit) {
-        log.debug("Getting top {} selling products for business ID: {}", limit, businessId);
-
-        // This would typically involve sales data, but for now return latest products
-        Pageable pageable = PageRequest.of(0, limit);
-        List<Product> products = productRepository.findLatestProducts(pageable);
-        return productMapper.toResponseList(products.stream()
-                .filter(p -> p.getBusinessId().equals(businessId))
-                .toList());
+    public boolean canFulfillOrder(String productId, int quantity) {
+        log.debug("Checking if order can be fulfilled for product ID: {} quantity: {}", productId, quantity);
+        return isProductInStock(productId, quantity);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getRecentlyAddedProducts(Long businessId, int limit) {
-        log.debug("Getting recently added {} products for business ID: {}", limit, businessId);
+    public List<ProductResponse> getTopSellingProducts(String businessId, int limit) {
+        log.debug("Getting top {} selling products for business ID: {}", limit, businessId);
+        // This would typically involve sales data, but for now return latest products
+        Pageable pageable = PageRequest.of(0, limit);
+        List<Product> products = productRepository.findTopSellingProductsByBusiness(businessId, pageable);
+        return productMapper.toResponseList(products);
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getRecentlyAddedProducts(String businessId, int limit) {
+        log.debug("Getting recently added {} products for business ID: {}", limit, businessId);
         List<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessId);
         return productMapper.toResponseList(products.stream()
                 .limit(limit)
                 .toList());
     }
 
-    public boolean canFulfillOrder(Long productId, int quantity){
-        log.debug("Checking if order can be fulfilled for product ID: {} quantity: {}", productId, quantity);
-
-        return isProductInStock(productId, quantity);
-    }
-
-    private Product findProductById(Long id) {
+    // Helper methods
+    private Product findProductById(String id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + id));
     }
-
 
     private void validateProductData(ProductCreateRequest request) {
         // Validate pricing
@@ -453,18 +464,5 @@ public class ProductServiceImpl implements ProductService{
         if (request.getMinOrderQuantity() > request.getMaxOrderQuantity()) {
             throw new InvalidProductDataException("Minimum order quantity cannot be greater than maximum order quantity");
         }
-    }
-
-    private ProductInventory createInventoryRecord(Product product, ProductCreateRequest request) {
-        return ProductInventory.builder()
-                .product(product)
-                .currentStock(request.getInitialStock())
-                .reservedStock(0)
-                .minStockLevel(request.getMinStockLevel())
-                .maxStockLevel(request.getMaxStockLevel())
-                .reorderPoint(request.getReorderPoint())
-                .reorderQuantity(request.getReorderQuantity())
-                .warehouseLocation(request.getWarehouseLocation())
-                .build();
     }
 }

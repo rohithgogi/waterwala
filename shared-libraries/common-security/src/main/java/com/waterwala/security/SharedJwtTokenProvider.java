@@ -23,14 +23,7 @@ public class SharedJwtTokenProvider {
     }*/
 
     //public String generateToken(Long userId,String email,UserRole role);
-    public static void main(String[] args) {
-        int[] data={1,2,3,4};
-        int[] datasource=Arrays.copyOfRange(data,2,4);
-        for(int x : datasource){
-            System.out.println("data is "+x);
-        }
 
-    }
     /*private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(this.jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);

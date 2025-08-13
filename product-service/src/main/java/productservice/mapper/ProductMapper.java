@@ -3,21 +3,22 @@ package productservice.mapper;
 import org.springframework.stereotype.Component;
 import productservice.dto.*;
 import productservice.model.Product;
-import productservice.model.ProductPricing;
-import productservice.model.ProductSpecification;
-import productservice.model.ProductInventory;
 
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class ProductMapper  {
-    public Product toEntity(ProductCreateRequest request){
-        if(request == null){
+public class ProductMapper {
+
+    public Product toEntity(ProductCreateRequest request) {
+        if (request == null) {
             return null;
         }
-        Product product=Product.builder()
+
+        Product product = Product.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .sku(request.getSku())
@@ -35,15 +36,18 @@ public class ProductMapper  {
                 .additionalImages(request.getAdditionalImages())
                 .isActive(true)
                 .isAvailable(true)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
-        //Map specifications
+
+        // Map specifications
         if (request.getSpecifications() != null) {
-            List<ProductSpecification> specifications = request.getSpecifications().stream()
-                    .map(specRequest -> ProductSpecification.builder()
-                            .product(product)
+            List<Product.ProductSpecification> specifications = request.getSpecifications().stream()
+                    .map(specRequest -> Product.ProductSpecification.builder()
                             .specKey(specRequest.getSpecKey())
                             .specValue(specRequest.getSpecValue())
                             .unit(specRequest.getUnit())
+                            .createdAt(LocalDateTime.now())
                             .build())
                     .collect(Collectors.toList());
             product.setSpecifications(specifications);
@@ -51,48 +55,63 @@ public class ProductMapper  {
 
         // Map pricing tiers
         if (request.getPricingTiers() != null) {
-            List<ProductPricing> pricingTiers = request.getPricingTiers().stream()
-                    .map(pricingRequest -> ProductPricing.builder()
-                            .product(product)
+            List<Product.ProductPricing> pricingTiers = request.getPricingTiers().stream()
+                    .map(pricingRequest -> Product.ProductPricing.builder()
                             .minQuantity(pricingRequest.getMinQuantity())
                             .maxQuantity(pricingRequest.getMaxQuantity())
                             .pricePerUnit(pricingRequest.getPricePerUnit())
                             .discountPercentage(pricingRequest.getDiscountPercentage())
                             .isActive(true)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
                             .build())
                     .collect(Collectors.toList());
             product.setPricingTiers(pricingTiers);
         }
 
+        // Create embedded inventory
+        Product.ProductInventory inventory = Product.ProductInventory.builder()
+                .currentStock(request.getInitialStock())
+                .reservedStock(0)
+                .minStockLevel(request.getMinStockLevel())
+                .maxStockLevel(request.getMaxStockLevel())
+                .reorderPoint(request.getReorderPoint())
+                .reorderQuantity(request.getReorderQuantity())
+                .warehouseLocation(request.getWarehouseLocation())
+                .lastUpdated(LocalDateTime.now())
+                .build();
+        product.setInventory(inventory);
+
         return product;
     }
 
-    public ProductResponse toResponse(Product product){
-        if(product == null){
+    public ProductResponse toResponse(Product product) {
+        if (product == null) {
             return null;
         }
-         ProductResponse response=ProductResponse.builder()
-                 .id(product.getId())
-                 .name(product.getName())
-                 .description(product.getDescription())
-                 .sku(product.getSku())
-                 .category(product.getCategory())
-                 .type(product.getType())
-                 .basePrice(product.getBasePrice())
-                 .discountedPrice(product.getDiscountedPrice())
-                 .availableQuantity(product.getAvailableQuantity())
-                 .minOrderQuantity(product.getMinOrderQuantity())
-                 .maxOrderQuantity(product.getMaxOrderQuantity())
-                 .unit(product.getUnit())
-                 .businessId(product.getBusinessId())
-                 .isActive(product.getIsActive())
-                 .isAvailable(product.getIsAvailable())
-                 .brand(product.getBrand())
-                 .imageUrl(product.getImageUrl())
-                 .additionalImages(product.getAdditionalImages())
-                 .createdAt(product.getCreatedAt())
-                 .updatedAt(product.getUpdatedAt())
-                 .build();
+
+        ProductResponse response = ProductResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .sku(product.getSku())
+                .category(product.getCategory())
+                .type(product.getType())
+                .basePrice(product.getBasePrice())
+                .discountedPrice(product.getDiscountedPrice())
+                .availableQuantity(product.getAvailableQuantity())
+                .minOrderQuantity(product.getMinOrderQuantity())
+                .maxOrderQuantity(product.getMaxOrderQuantity())
+                .unit(product.getUnit())
+                .businessId(product.getBusinessId())
+                .isActive(product.getIsActive())
+                .isAvailable(product.getIsAvailable())
+                .brand(product.getBrand())
+                .imageUrl(product.getImageUrl())
+                .additionalImages(product.getAdditionalImages())
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
+                .build();
 
         // Map specifications
         if (product.getSpecifications() != null) {
@@ -109,13 +128,12 @@ public class ProductMapper  {
                     .collect(Collectors.toList());
             response.setPricingTiers(pricingTiers);
         }
-        return response;
-    }
-    public ProductResponse toResponseWithInventory(Product product, ProductInventory inventory) {
-        ProductResponse response = toResponse(product);
-        if (inventory != null) {
-            response.setInventory(toInventoryResponse(inventory));
+
+        // Map inventory
+        if (product.getInventory() != null) {
+            response.setInventory(toInventoryResponse(product.getInventory()));
         }
+
         return response;
     }
 
@@ -138,59 +156,48 @@ public class ProductMapper  {
         product.setBrand(request.getBrand());
         product.setImageUrl(request.getImageUrl());
         product.setAdditionalImages(request.getAdditionalImages());
+        product.setUpdatedAt(LocalDateTime.now());
 
         // Update specifications
         if (request.getSpecifications() != null) {
-            // Clear existing specifications
-            if (product.getSpecifications() != null) {
-                product.getSpecifications().clear();
-            } else {
-                product.setSpecifications(new ArrayList<>());
-            }
-
-            // Add new specifications
-            List<ProductSpecification> specifications = request.getSpecifications().stream()
-                    .map(specRequest -> ProductSpecification.builder()
-                            .product(product)
+            List<Product.ProductSpecification> specifications = request.getSpecifications().stream()
+                    .map(specRequest -> Product.ProductSpecification.builder()
                             .specKey(specRequest.getSpecKey())
                             .specValue(specRequest.getSpecValue())
                             .unit(specRequest.getUnit())
+                            .createdAt(LocalDateTime.now())
                             .build())
                     .collect(Collectors.toList());
-            product.getSpecifications().addAll(specifications);
+            product.setSpecifications(specifications);
+        } else {
+            product.setSpecifications(new ArrayList<>());
         }
 
         // Update pricing tiers
         if (request.getPricingTiers() != null) {
-            // Clear existing pricing tiers
-            if (product.getPricingTiers() != null) {
-                product.getPricingTiers().clear();
-            } else {
-                product.setPricingTiers(new ArrayList<>());
-            }
-
-            // Add new pricing tiers
-            List<ProductPricing> pricingTiers = request.getPricingTiers().stream()
-                    .map(pricingRequest -> ProductPricing.builder()
-                            .product(product)
+            List<Product.ProductPricing> pricingTiers = request.getPricingTiers().stream()
+                    .map(pricingRequest -> Product.ProductPricing.builder()
                             .minQuantity(pricingRequest.getMinQuantity())
                             .maxQuantity(pricingRequest.getMaxQuantity())
                             .pricePerUnit(pricingRequest.getPricePerUnit())
                             .discountPercentage(pricingRequest.getDiscountPercentage())
                             .isActive(true)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
                             .build())
                     .collect(Collectors.toList());
-            product.getPricingTiers().addAll(pricingTiers);
+            product.setPricingTiers(pricingTiers);
+        } else {
+            product.setPricingTiers(new ArrayList<>());
         }
     }
 
-    public ProductSpecificationResponse toSpecificationResponse(ProductSpecification specification) {
+    public ProductSpecificationResponse toSpecificationResponse(Product.ProductSpecification specification) {
         if (specification == null) {
             return null;
         }
 
         return ProductSpecificationResponse.builder()
-                .id(specification.getId())
                 .specKey(specification.getSpecKey())
                 .specValue(specification.getSpecValue())
                 .unit(specification.getUnit())
@@ -198,13 +205,12 @@ public class ProductMapper  {
                 .build();
     }
 
-    public ProductPricingResponse toPricingResponse(ProductPricing pricing) {
+    public ProductPricingResponse toPricingResponse(Product.ProductPricing pricing) {
         if (pricing == null) {
             return null;
         }
 
         return ProductPricingResponse.builder()
-                .id(pricing.getId())
                 .minQuantity(pricing.getMinQuantity())
                 .maxQuantity(pricing.getMaxQuantity())
                 .pricePerUnit(pricing.getPricePerUnit())
@@ -215,13 +221,12 @@ public class ProductMapper  {
                 .build();
     }
 
-    public ProductInventoryResponse toInventoryResponse(ProductInventory inventory) {
+    public ProductInventoryResponse toInventoryResponse(Product.ProductInventory inventory) {
         if (inventory == null) {
             return null;
         }
 
         return ProductInventoryResponse.builder()
-                .id(inventory.getId())
                 .currentStock(inventory.getCurrentStock())
                 .reservedStock(inventory.getReservedStock())
                 .minStockLevel(inventory.getMinStockLevel())
@@ -243,32 +248,13 @@ public class ProductMapper  {
                 .collect(Collectors.toList());
     }
 
-    public ProductSpecification toSpecificationEntity(ProductSpecificationRequest request, Product product) {
-        if (request == null) {
-            return null;
+    // Helper method to update inventory
+    public void updateInventory(Product product, int stockChange, int reservedChange) {
+        if (product.getInventory() != null) {
+            Product.ProductInventory inventory = product.getInventory();
+            inventory.setCurrentStock(inventory.getCurrentStock() + stockChange);
+            inventory.setReservedStock(inventory.getReservedStock() + reservedChange);
+            inventory.setLastUpdated(LocalDateTime.now());
         }
-
-        return ProductSpecification.builder()
-                .product(product)
-                .specKey(request.getSpecKey())
-                .specValue(request.getSpecValue())
-                .unit(request.getUnit())
-                .build();
     }
-
-    public ProductPricing toPricingEntity(ProductPricingRequest request, Product product) {
-        if (request == null) {
-            return null;
-        }
-
-        return ProductPricing.builder()
-                .product(product)
-                .minQuantity(request.getMinQuantity())
-                .maxQuantity(request.getMaxQuantity())
-                .pricePerUnit(request.getPricePerUnit())
-                .discountPercentage(request.getDiscountPercentage())
-                .isActive(true)
-                .build();
-    }
-
 }

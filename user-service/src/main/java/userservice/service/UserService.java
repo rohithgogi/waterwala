@@ -1,6 +1,7 @@
 package userservice.service;
 
 
+import io.swagger.v3.oas.models.OpenAPI;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import userservice.dto.UserRegistrationDto;
 import userservice.dto.UserResponseDto;
 import userservice.dto.UserUpdateDto;
+import userservice.dto.UserValidationDto;
 import userservice.enums.UserRole;
 import userservice.enums.UserStatus;
 import userservice.exceptions.UserAlreadyExistsException;
@@ -18,6 +20,7 @@ import userservice.model.User;
 import userservice.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +54,29 @@ public class UserService {
 
         return convertToResponseDto(savedUser);
 
+    }
+    public UserValidationDto validateUser(Long userId){
+        Optional<User> userOpt=userRepository.findById(userId);
+        if(userOpt.isEmpty()){
+            return UserValidationDto.builder()
+                    .exists(false)
+                    .isActive(false)
+                    .message("User not found")
+                    .userId(userId)
+                    .build();
+        }
+
+        User user=userOpt.get();
+        boolean isActive=user.getStatus()==UserStatus.ACTIVE;
+        return UserValidationDto.builder().
+                exists(true)
+                .isActive(isActive)
+                .role(user.getRole().name())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .message(isActive ? "User validation successful" : "User is not active - current status: " + user.getStatus())
+                .build();
     }
     public UserResponseDto getUserById(Long userId){
         User user=userRepository.findById(userId)

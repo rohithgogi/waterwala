@@ -1,16 +1,20 @@
 package businessservice.service;
 
+import businessservice.client.UserServiceClient;
+import businessservice.client.dto.UserValidationResponse;
 import businessservice.dto.BusinessProfileDto;
 import businessservice.dto.BusinessRegistrationDto;
 import businessservice.dto.BusinessSearchDto;
 import businessservice.dto.BusinessUpdateDto;
 import businessservice.exceptions.BusinessAlreadyExistsException;
 import businessservice.exceptions.BusinessNotFoundException;
+import businessservice.exceptions.InvalidBusinessDataException;
 import businessservice.exceptions.UnauthorizedAccessException;
 import businessservice.model.Business;
 import businessservice.model.BusinessStatus;
 import businessservice.model.VerificationStatus;
 import businessservice.repository.BusinessRepository;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,6 +32,7 @@ import java.util.List;
 public class BusinessService {
     private final BusinessRepository businessRepository;
     private final BusinessValidationService validationService;
+    private final UserServiceClient userServiceClient;
 
     public BusinessProfileDto registerBusiness(BusinessRegistrationDto registrationDto){
         log.info("Registering new business: {}",registrationDto.getBusinessName());
@@ -67,6 +72,71 @@ public class BusinessService {
 
         log.info("Business registered successfully with ID: {}", savedBusiness.getId());
         return convertToProfileDto(savedBusiness);
+    }
+
+    private void validateBusinessOwner(Long userId) {
+        try {
+            log.info("Validating user {} with user-service", userId);
+
+            UserValidationResponse validation = userServiceClient.validateUser(userId).getBody();
+
+            if (validation == null) {
+                log.error("Received null validation response for userId: {}", userId);
+                throw new InvalidBusinessDataException("Unable to validate user. Please try again.");
+            }
+
+            // Check if user exists
+            if (!validation.getExists()) {
+                log.warn("User not found: {}", userId);
+                throw new InvalidBusinessDataException(
+                        "User not found. Please register as a user first."
+                );
+            }
+
+            // Check user role - must be BUSINESS_OWNER
+            if (!"BUSINESS_OWNER".equals(validation.getRole())) {
+                log.warn("User {} has invalid role for business registration: {}", userId, validation.getRole());
+                throw new UnauthorizedAccessException(
+                        String.format("Only users with BUSINESS_OWNER role can register a business. " +
+                                        "Current role: %s. Please contact support to upgrade your account.",
+                                validation.getRole())
+                );
+            }
+
+            // Check if user account is active
+            if (!validation.getIsActive()) {
+                log.warn("User {} is not active", userId);
+                throw new InvalidBusinessDataException(
+                        "Your user account is not active. Please complete email and phone verification first, " +
+                                "or contact support if your account is suspended."
+                );
+            }
+
+            log.info("User validation successful - userId: {}, email: {}, role: {}",
+                    validation.getUserId(), validation.getEmail(), validation.getRole());
+
+        } catch (FeignException.NotFound e) {
+            log.error("User service returned 404 for userId: {}", userId);
+            throw new InvalidBusinessDataException("User not found in the system.");
+
+        } catch (FeignException.ServiceUnavailable | FeignException.InternalServerError e) {
+            log.error("User service is unavailable or returned server error", e);
+            throw new InvalidBusinessDataException(
+                    "User validation service is temporarily unavailable. Please try again in a few minutes."
+            );
+
+        } catch (FeignException e) {
+            log.error("Unexpected error communicating with user service: {} - {}", e.status(), e.getMessage());
+            throw new InvalidBusinessDataException(
+                    "Unable to validate user due to system error. Please try again."
+            );
+        } catch (InvalidBusinessDataException | UnauthorizedAccessException e) {
+            // Re-throw our custom exceptions as-is
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error during user validation for userId: {}", userId, e);
+            throw new InvalidBusinessDataException("System error during user validation. Please try again.");
+        }
     }
     @Transactional(readOnly = true)
     public BusinessProfileDto getBusinessProfile(Long businessId){

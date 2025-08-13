@@ -1,23 +1,22 @@
 package productservice.model;
 
-import jakarta.persistence.*;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import productservice.model.ProductCategory;
-import productservice.model.ProductPricing;
-import productservice.model.ProductSpecification;
-import productservice.model.ProductType;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
-@Entity
-@Table(name = "products")
+@Document(collection = "products")
 @Data
 @Builder
 @NoArgsConstructor
@@ -25,73 +24,84 @@ import java.util.List;
 public class Product {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(nullable = false)
     private String name;
-
-    @Column(length = 1000)
     private String description;
 
-    @Column(nullable = false)
+    @Indexed(unique = true)
     private String sku;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private ProductCategory category;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private ProductType type;
 
-    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal basePrice;
-
-    @Column(precision = 10, scale = 2)
     private BigDecimal discountedPrice;
 
-    @Column(nullable = false)
     private Integer availableQuantity;
-
-    @Column(nullable = false)
     private Integer minOrderQuantity;
-
-    @Column(nullable = false)
     private Integer maxOrderQuantity;
 
-    @Column(nullable = false)
-    private String unit; // L, pieces, kg, etc.
+    private String unit;
 
-    @Column(nullable = false)
-    private Long businessId;
+    @Indexed
+    private String businessId;
 
-    @Column(nullable = false)
     private Boolean isActive;
-
-    @Column(nullable = false)
     private Boolean isAvailable;
-
-    @Column
     private String brand;
-
-    @Column
     private String imageUrl;
-
-    @ElementCollection
-    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "image_url")
     private List<String> additionalImages;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // Embedded documents
     private List<ProductSpecification> specifications;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ProductPricing> pricingTiers;
+    private ProductInventory inventory;
 
-    @CreationTimestamp
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
+    @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    // Embedded classes
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProductSpecification {
+        private String specKey;
+        private String specValue;
+        private String unit;
+        private LocalDateTime createdAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProductPricing {
+        private Integer minQuantity;
+        private Integer maxQuantity;
+        private BigDecimal pricePerUnit;
+        private BigDecimal discountPercentage;
+        private Boolean isActive;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProductInventory {
+        private Integer currentStock;
+        private Integer reservedStock;
+        private Integer minStockLevel;
+        private Integer maxStockLevel;
+        private Integer reorderPoint;
+        private Integer reorderQuantity;
+        private String warehouseLocation;
+        private LocalDateTime lastUpdated;
+    }
 }

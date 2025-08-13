@@ -13,8 +13,8 @@ public class InsufficientStockException extends RuntimeException{
         super(message, cause);
     }
 
-    public InsufficientStockException(Long productId, int requestedQuantity, int availableQuantity) {
-        super(String.format("Insufficient stock for product ID: %d. Requested: %d, Available: %d",
+    public InsufficientStockException(String productId, int requestedQuantity, int availableQuantity) {
+        super(String.format("Insufficient stock for product ID: %s. Requested: %d, Available: %d",
                 productId, requestedQuantity, availableQuantity));
     }
 }

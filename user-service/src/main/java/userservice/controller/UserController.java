@@ -19,6 +19,7 @@ import userservice.dto.CommonResponseDto.StandardResponse;
 import userservice.dto.UserRegistrationDto;
 import userservice.dto.UserResponseDto;
 import userservice.dto.UserUpdateDto;
+import userservice.dto.UserValidationDto;
 import userservice.enums.UserRole;
 import userservice.enums.UserStatus;
 import userservice.service.UserService;
@@ -46,6 +47,20 @@ public class UserController {
         UserResponseDto user = service.registerUser(registrationDto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(StandardResponse.success("User registered successfully", user));
+    }
+
+    @GetMapping("/{userId}/validate")
+    @Operation(summary = "Validate user for microservice communication",
+            description = "Validates user existence, status and role for inter-service communication")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User validation completed"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    @SecurityRequirement(name = "")
+    public ResponseEntity<UserValidationDto> validateUser(
+            @Parameter(description = "User ID to validate") @PathVariable Long userId) {
+        UserValidationDto validation = service.validateUser(userId);
+        return ResponseEntity.ok(validation);
     }
 
     @GetMapping("/id/{userId}")
