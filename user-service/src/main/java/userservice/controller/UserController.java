@@ -112,7 +112,7 @@ public class UserController {
 
     @PatchMapping("/{userId}/verify-email")
     @Operation(summary = "Verify email", description = "Marks user's email as verified")
-    @SecurityRequirement(name = "")
+    @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("@securityService.canAccessUserData(#userId)")
     public ResponseEntity<StandardResponse<UserResponseDto>> verifyEmail(
             @Parameter(description = "User ID") @PathVariable Long userId) {
@@ -122,7 +122,7 @@ public class UserController {
 
     @PatchMapping("/{userId}/verify-phone")
     @Operation(summary = "Verify phone", description = "Marks user's phone number as verified")
-    @SecurityRequirement(name = "")
+    @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("@securityService.canAccessUserData(#userId)")
     public ResponseEntity<StandardResponse<UserResponseDto>> verifyPhone(
             @Parameter(description = "User ID") @PathVariable Long userId) {

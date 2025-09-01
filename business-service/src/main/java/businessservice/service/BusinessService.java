@@ -39,6 +39,8 @@ public class BusinessService {
 
         validationService.validateBusinessRegistration(registrationDto);
 
+        validateBusinessOwner(registrationDto.getUserId());
+
         if(businessRepository.findByBusinessRegistrationNumber(registrationDto.getBusinessRegistrationNumber()).isPresent()){
             throw new BusinessAlreadyExistsException("Business with this registration number already exists");
         }
@@ -75,6 +77,7 @@ public class BusinessService {
     }
 
     private void validateBusinessOwner(Long userId) {
+        log.info("=== STARTING USER VALIDATION FOR USER ID: {} ===", userId);
         try {
             log.info("Validating user {} with user-service", userId);
 

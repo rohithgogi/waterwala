@@ -13,6 +13,6 @@ public class LoginResponseDto {
     private String sessionToken;
     private String refreshToken;
     private String accessToken;
-    private Long expiresIn; // seconds until token expires
+    private Long expiresIn;
     private UserResponseDto user;
 }

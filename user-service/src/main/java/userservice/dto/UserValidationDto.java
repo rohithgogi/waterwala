@@ -18,4 +18,7 @@ public class UserValidationDto {
     private Long userId;
     private String firstName;
     private String lastName;
+    private Boolean phoneVerified;
+    private Boolean emailVerified;
+    private String status;
 }

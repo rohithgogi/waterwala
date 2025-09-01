@@ -56,25 +56,33 @@ public class UserService {
 
     }
     public UserValidationDto validateUser(Long userId){
-        Optional<User> userOpt=userRepository.findById(userId);
+        Optional<User> userOpt = userRepository.findById(userId);
         if(userOpt.isEmpty()){
             return UserValidationDto.builder()
                     .exists(false)
                     .isActive(false)
                     .message("User not found")
                     .userId(userId)
+                    .phoneVerified(false)
+                    .emailVerified(false)
+                    .status("NOT_FOUND")
                     .build();
         }
 
-        User user=userOpt.get();
-        boolean isActive=user.getStatus()==UserStatus.ACTIVE;
-        return UserValidationDto.builder().
-                exists(true)
+        User user = userOpt.get();
+        boolean isActive = user.getStatus() == UserStatus.ACTIVE;
+
+        return UserValidationDto.builder()
+                .exists(true)
                 .isActive(isActive)
                 .role(user.getRole().name())
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
+                .userId(user.getId())
+                .phoneVerified(user.getPhoneVerified())
+                .emailVerified(user.getEmailVerified())
+                .status(user.getStatus().name())
                 .message(isActive ? "User validation successful" : "User is not active - current status: " + user.getStatus())
                 .build();
     }

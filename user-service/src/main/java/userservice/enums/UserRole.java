@@ -12,10 +12,6 @@ public enum UserRole {
     ADMIN("Administrator");
 
     private final String displayName;
-
-//    UserRole(String displayName) {
-//        this.displayName = displayName;
-//    }
 }
 
 

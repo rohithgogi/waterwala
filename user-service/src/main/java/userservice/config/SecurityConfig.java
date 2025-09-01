@@ -41,55 +41,56 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/send-otp",
                                 "/api/v1/auth/login",
-
-                                "/api/v1/users/register",
-
+                                "/api/v1/users/register",  // Specific registration endpoint
+                                "/api/v1/users/exists/**", // Specific exists endpoints
                                 "/api/v1/otp/send/**",
                                 "/api/v1/otp/verify",
                                 "/api/v1/otp/status",
-
-                                "/api/v1/users/**",
-                                "/api/v1/users/exists/**",
-
-                                "/api/v1/sessions/create",//session management endpoints
+                                "/api/v1/sessions/create",
                                 "/api/v1/sessions/refresh",
                                 "/api/v1/sessions/validate",
-
-                                "/swagger-ui/**",//swagger endpoints
+                                // Swagger endpoints
+                                "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/webjars/**",
                                 "/swagger-resources/**"
                         ).permitAll()
 
+                        // Admin only endpoints
                         .requestMatchers(
-                                "/api/v1/users",
+                                "/api/v1/users", // GET all users
                                 "/api/v1/users/status/**",
-                                "/api/v1/users/role/**"
+                                "/api/v1/users/role/**",
+                                "/api/v1/users/*/status" // Update user status
                         ).hasRole("ADMIN")
 
+                        // Business owner and admin endpoints
                         .requestMatchers(
                                 "/api/v1/users/phone/**",
-                                "/api/v1/users/email/**",
-                                "/api/v1/users/exists/**"
+                                "/api/v1/users/email/**"
                         ).hasAnyRole("BUSINESS_OWNER", "ADMIN")
 
+                        // Authenticated user endpoints (requires valid JWT and role)
                         .requestMatchers(
                                 "/api/v1/users/id/**",
                                 "/api/v1/users/*/verify-phone",
-                                "/api/v1/users/*/verify-email",
+                                "/api/v1/users/*/verify-email",     // This now requires authentication
                                 "/api/v1/users/*/last-login"
                         ).hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
 
-                        .requestMatchers("/api/v1/users/*").hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
+                        // General user endpoints (authenticated users)
+                        .requestMatchers("/api/v1/users/*")
+                        .hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
 
-                        .requestMatchers("/api/v1/users/*/status").hasRole("ADMIN")
+                        // Address and session management
+                        .requestMatchers("/api/v1/addresses/**")
+                        .hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
 
-                        .requestMatchers("/api/v1/addresses/**").hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
+                        .requestMatchers("/api/v1/sessions/**")
+                        .hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
 
-                        .requestMatchers("/api/v1/sessions/**").hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
-
-
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
