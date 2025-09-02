@@ -131,6 +131,9 @@ function App() {
         <Router>
           <div className="App">
             <Routes>
+              {/* Root redirect */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
               {/* Public Routes */}
               <Route
                 path="/login"
@@ -175,7 +178,7 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
                     <Dashboard>
-                      <PlaceholderPage 
+                      <PlaceholderPage
                         title="Browse Products"
                         description="Discover and order from a wide range of water products available in your area."
                       />
@@ -188,7 +191,7 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
                     <Dashboard>
-                      <PlaceholderPage 
+                      <PlaceholderPage
                         title="Product Details"
                         description="View detailed information about the selected water product."
                       />
@@ -201,7 +204,7 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
                     <Dashboard>
-                      <PlaceholderPage 
+                      <PlaceholderPage
                         title="Shopping Cart"
                         description="Review your selected items before placing an order."
                       />
@@ -214,7 +217,7 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
                     <Dashboard>
-                      <PlaceholderPage 
+                      <PlaceholderPage
                         title="Order History"
                         description="Track your current orders and view your order history."
                       />
@@ -227,7 +230,7 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
                     <Dashboard>
-                      <PlaceholderPage 
+                      <PlaceholderPage
                         title="Order Tracking"
                         description="Track the real-time status of your water delivery."
                       />
@@ -240,7 +243,7 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
                     <Dashboard>
-                      <PlaceholderPage 
+                      <PlaceholderPage
                         title="Address Management"
                         description="Manage your delivery addresses for quick and easy ordering."
                       />
@@ -253,7 +256,7 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
                     <Dashboard>
-                      <PlaceholderPage 
+                      <PlaceholderPage
                         title="Profile Settings"
                         description="Manage your personal information and account settings."
                       />
@@ -268,9 +271,22 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
                     <Dashboard>
-                      <PlaceholderPage 
+                      <PlaceholderPage
                         title="Business Dashboard"
                         description="Monitor your business performance and manage operations."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/business/profile"
+                element={
+                  <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Business Profile"
+                        description="Manage your business information and settings."
                       />
                     </Dashboard>
                   </ProtectedRoute>
@@ -281,7 +297,7 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
                     <Dashboard>
-                      <PlaceholderPage 
+                      <PlaceholderPage
                         title="Product Management"
                         description="Add, edit, and manage your water products and inventory."
                       />
@@ -295,3 +311,196 @@ function App() {
                   <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
                     <Dashboard>
                       <PlaceholderPage
+                        title="Order Management"
+                        description="View and manage customer orders for your business."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/business/analytics"
+                element={
+                  <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Business Analytics"
+                        description="View detailed analytics and performance metrics."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/business/inventory"
+                element={
+                  <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Inventory Management"
+                        description="Track and manage your product inventory levels."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/business/customers"
+                element={
+                  <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Customer Management"
+                        description="View and manage your customer relationships."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Admin Routes */}
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Admin Dashboard"
+                        description="Overview of system-wide metrics and management tools."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="User Management"
+                        description="Manage all users, roles, and permissions in the system."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/businesses"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Business Management"
+                        description="Verify and manage business accounts and applications."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/analytics"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="System Analytics"
+                        description="Comprehensive analytics and reporting for the entire platform."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/settings"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="System Settings"
+                        description="Configure system-wide settings and parameters."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/reports"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Reports"
+                        description="Generate and view detailed system reports."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/support"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Support Management"
+                        description="Manage customer support tickets and inquiries."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Shared Routes (accessible by multiple roles) */}
+              <Route
+                path="/notifications"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Notifications"
+                        description="View and manage your notifications and alerts."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/help"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Help & Support"
+                        description="Find answers to common questions and contact support."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard>
+                      <PlaceholderPage
+                        title="Account Settings"
+                        description="Manage your account preferences and security settings."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Error Pages */}
+              <Route path="/unauthorized" element={<UnauthorizedPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </div>
+        </Router>
+      </NotificationProvider>
+    </AuthProvider>
+  );
+}
+
+export default App;
