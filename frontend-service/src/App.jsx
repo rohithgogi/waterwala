@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -11,26 +12,8 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import OTPVerification from './pages/auth/OTPVerification';
 
-// Customer Pages
-import ProductBrowse from './pages/customer/ProductBrowse';
-import ProductDetail from './pages/customer/ProductDetail';
-import Cart from './pages/customer/Cart';
-import OrderHistory from './pages/customer/OrderHistory';
-import OrderTracking from './pages/customer/OrderTracking';
-import AddressManagement from './pages/customer/AddressManagement';
-
-// Business Pages
-import BusinessDashboard from './pages/business/BusinessDashboard';
-import ProductManagement from './pages/business/ProductManagement';
-import OrderManagement from './pages/business/OrderManagement';
-import BusinessProfile from './pages/business/BusinessProfile';
-import BusinessAnalytics from './pages/business/Analytics';
-
-// Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import UserManagement from './pages/admin/UserManagement';
-import BusinessVerification from './pages/admin/BusinessVerification';
-import SystemAnalytics from './pages/admin/SystemAnalytics';
+// Dashboard Content
+import DashboardContent from './pages/Dashboard';
 
 // Import CSS
 import './styles/globals.css';
@@ -41,8 +24,11 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -64,8 +50,11 @@ const PublicRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -77,18 +66,58 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+// Placeholder components for pages that don't exist yet
+const PlaceholderPage = ({ title, description }) => (
+  <div className="text-center py-12">
+    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="w-8 h-8 bg-blue-600 rounded"></div>
+    </div>
+    <h1 className="text-2xl font-bold text-gray-900 mb-4">{title}</h1>
+    <p className="text-gray-600 mb-8 max-w-md mx-auto">{description}</p>
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-lg mx-auto">
+      <p className="text-blue-800 font-medium mb-2">Coming Soon</p>
+      <p className="text-blue-600 text-sm">
+        This feature is under development and will be available in the next update.
+      </p>
+    </div>
+  </div>
+);
+
 // Unauthorized Page Component
 const UnauthorizedPage = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <div className="text-center">
+    <div className="text-center max-w-md mx-auto px-4">
+      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-8 h-8 bg-red-600 rounded-full"></div>
+      </div>
       <h1 className="text-4xl font-bold text-gray-900 mb-4">403</h1>
-      <p className="text-xl text-gray-600 mb-8">Unauthorized Access</p>
-      <p className="text-gray-500 mb-8">You don't have permission to access this page.</p>
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">Unauthorized Access</h2>
+      <p className="text-gray-600 mb-8">You don't have permission to access this page.</p>
       <button
         onClick={() => window.history.back()}
-        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
       >
         Go Back
+      </button>
+    </div>
+  </div>
+);
+
+// 404 Page Component
+const NotFoundPage = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="text-center max-w-md mx-auto px-4">
+      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-8 h-8 bg-gray-600 rounded"></div>
+      </div>
+      <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">Page Not Found</h2>
+      <p className="text-gray-600 mb-8">The page you're looking for doesn't exist.</p>
+      <button
+        onClick={() => window.location.href = '/dashboard'}
+        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+      >
+        Go to Dashboard
       </button>
     </div>
   </div>
@@ -128,12 +157,14 @@ function App() {
                 }
               />
 
-              {/* Protected Routes */}
+              {/* Protected Routes with Dashboard Layout */}
               <Route
                 path="/dashboard"
                 element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <Dashboard>
+                      <DashboardContent />
+                    </Dashboard>
                   </ProtectedRoute>
                 }
               />
@@ -143,7 +174,12 @@ function App() {
                 path="/products"
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
-                    <ProductBrowse />
+                    <Dashboard>
+                      <PlaceholderPage 
+                        title="Browse Products"
+                        description="Discover and order from a wide range of water products available in your area."
+                      />
+                    </Dashboard>
                   </ProtectedRoute>
                 }
               />
@@ -151,7 +187,12 @@ function App() {
                 path="/products/:productId"
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
-                    <ProductDetail />
+                    <Dashboard>
+                      <PlaceholderPage 
+                        title="Product Details"
+                        description="View detailed information about the selected water product."
+                      />
+                    </Dashboard>
                   </ProtectedRoute>
                 }
               />
@@ -159,7 +200,12 @@ function App() {
                 path="/cart"
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
-                    <Cart />
+                    <Dashboard>
+                      <PlaceholderPage 
+                        title="Shopping Cart"
+                        description="Review your selected items before placing an order."
+                      />
+                    </Dashboard>
                   </ProtectedRoute>
                 }
               />
@@ -167,7 +213,12 @@ function App() {
                 path="/orders"
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
-                    <OrderHistory />
+                    <Dashboard>
+                      <PlaceholderPage 
+                        title="Order History"
+                        description="Track your current orders and view your order history."
+                      />
+                    </Dashboard>
                   </ProtectedRoute>
                 }
               />
@@ -175,7 +226,12 @@ function App() {
                 path="/orders/:orderId/track"
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
-                    <OrderTracking />
+                    <Dashboard>
+                      <PlaceholderPage 
+                        title="Order Tracking"
+                        description="Track the real-time status of your water delivery."
+                      />
+                    </Dashboard>
                   </ProtectedRoute>
                 }
               />
@@ -183,7 +239,25 @@ function App() {
                 path="/addresses"
                 element={
                   <ProtectedRoute allowedRoles={['CUSTOMER']}>
-                    <AddressManagement />
+                    <Dashboard>
+                      <PlaceholderPage 
+                        title="Address Management"
+                        description="Manage your delivery addresses for quick and easy ordering."
+                      />
+                    </Dashboard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                    <Dashboard>
+                      <PlaceholderPage 
+                        title="Profile Settings"
+                        description="Manage your personal information and account settings."
+                      />
+                    </Dashboard>
                   </ProtectedRoute>
                 }
               />
@@ -193,7 +267,12 @@ function App() {
                 path="/business/dashboard"
                 element={
                   <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
-                    <BusinessDashboard />
+                    <Dashboard>
+                      <PlaceholderPage 
+                        title="Business Dashboard"
+                        description="Monitor your business performance and manage operations."
+                      />
+                    </Dashboard>
                   </ProtectedRoute>
                 }
               />
@@ -201,7 +280,12 @@ function App() {
                 path="/business/products"
                 element={
                   <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
-                    <ProductManagement />
+                    <Dashboard>
+                      <PlaceholderPage 
+                        title="Product Management"
+                        description="Add, edit, and manage your water products and inventory."
+                      />
+                    </Dashboard>
                   </ProtectedRoute>
                 }
               />
@@ -209,89 +293,5 @@ function App() {
                 path="/business/orders"
                 element={
                   <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
-                    <OrderManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/business/profile"
-                element={
-                  <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
-                    <BusinessProfile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/business/analytics"
-                element={
-                  <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
-                    <BusinessAnalytics />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Admin Routes */}
-              <Route
-                path="/admin/dashboard"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMIN']}>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMIN']}>
-                    <UserManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/businesses"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMIN']}>
-                    <BusinessVerification />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/analytics"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMIN']}>
-                    <SystemAnalytics />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Utility Routes */}
-              <Route path="/unauthorized" element={<UnauthorizedPage />} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-              {/* 404 Route */}
-              <Route
-                path="*"
-                element={
-                  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                    <div className="text-center">
-                      <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
-                      <p className="text-xl text-gray-600 mb-8">Page Not Found</p>
-                      <button
-                        onClick={() => window.location.href = '/dashboard'}
-                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Go to Dashboard
-                      </button>
-                    </div>
-                  </div>
-                }
-              />
-            </Routes>
-          </div>
-        </Router>
-      </NotificationProvider>
-    </AuthProvider>
-  );
-}
-
-export default App;
+                    <Dashboard>
+                      <PlaceholderPage

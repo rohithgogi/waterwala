@@ -1,5 +1,6 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiClient, API_BASE_URLS } from '../services/api';
+import { apiClient, API_BASE_URLS, clearAuthData } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -54,64 +55,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (phoneNumber, otp) => {
-    try {
-      setLoading(true);
-
-      // Step 1: Login with OTP
-      const loginResponse = await apiClient.post(`${API_BASE_URLS.USER_SERVICE}/auth/login`, {
-        phone: phoneNumber,
-        otp: otp
-      });
-
-      if (loginResponse.data.success) {
-        const { user: userData, accessToken, refreshToken } = loginResponse.data.data;
-
-        // Step 2: Create session
-        const sessionResponse = await apiClient.post(`${API_BASE_URLS.USER_SERVICE}/sessions/create`, null, {
-          params: {
-            userId: userData.id,
-            deviceId: generateDeviceId(),
-            deviceType: getDeviceType(),
-            fcmToken: null // Add FCM token if you implement push notifications
-          }
-        });
-
-        if (sessionResponse.data.success) {
-          const sessionData = sessionResponse.data.data;
-
-          // Store auth data
-          localStorage.setItem('authToken', sessionData.accessToken);
-          localStorage.setItem('refreshToken', sessionData.refreshToken);
-          localStorage.setItem('userData', JSON.stringify(userData));
-          localStorage.setItem('sessionId', sessionData.sessionId);
-
-          // Update state
-          setUser(userData);
-          setSessionToken(sessionData.accessToken);
-          setIsAuthenticated(true);
-
-          return { success: true, user: userData };
-        }
-      }
-
-      return { success: false, message: 'Login failed' };
-    } catch (error) {
-      console.error('Login error:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Login failed. Please try again.'
-      };
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const sendOTP = async (phoneNumber) => {
     try {
-      const response = await apiClient.post(`${API_BASE_URLS.USER_SERVICE}/auth/send-otp`, null, {
-        params: { phone: phoneNumber }
-      });
+      // Format phone number to ensure it has correct format
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+
+      const response = await apiClient.post(
+        `${API_BASE_URLS.USER_SERVICE}/auth/send-otp`,
+        null,
+        { params: { phone: formattedPhone } }
+      );
 
       return {
         success: response.data.success,
@@ -126,26 +79,91 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const login = async (phoneNumber, otp) => {
+    try {
+      setLoading(true);
+
+      // Format phone number
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+
+      // Step 1: Login with OTP
+      const loginResponse = await apiClient.post(
+        `${API_BASE_URLS.USER_SERVICE}/auth/login`,
+        {
+          phone: formattedPhone,
+          otp: otp,
+          deviceId: generateDeviceId(),
+          deviceType: getDeviceType(),
+          fcmToken: null // Add FCM token if you implement push notifications
+        }
+      );
+
+      if (loginResponse.data.success) {
+        const { user: userData, sessionToken, refreshToken, accessToken } = loginResponse.data.data;
+
+        // Store auth data
+        localStorage.setItem('authToken', accessToken || sessionToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('userData', JSON.stringify(userData));
+
+        // Update state
+        setUser(userData);
+        setSessionToken(accessToken || sessionToken);
+        setIsAuthenticated(true);
+
+        return { success: true, user: userData };
+      }
+
+      return {
+        success: false,
+        message: loginResponse.data.message || 'Login failed'
+      };
+    } catch (error) {
+      console.error('Login error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed. Please try again.'
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const register = async (registrationData) => {
     try {
       setLoading(true);
 
-      const response = await apiClient.post(`${API_BASE_URLS.USER_SERVICE}/users/register`, registrationData);
+      // Format the registration data according to API requirements
+      const formattedData = {
+        firstName: registrationData.firstName.trim(),
+        lastName: registrationData.lastName.trim(),
+        email: registrationData.email.toLowerCase().trim(),
+        phone: formatPhoneNumber(registrationData.phone),
+        role: registrationData.role || 'CUSTOMER'
+      };
+
+      const response = await apiClient.post(
+        `${API_BASE_URLS.USER_SERVICE}/users/register`,
+        formattedData
+      );
 
       if (response.data.success) {
         return {
           success: true,
           user: response.data.data,
-          message: 'Registration successful'
+          message: response.data.message || 'Registration successful'
         };
       }
 
-      return { success: false, message: 'Registration failed' };
+      return {
+        success: false,
+        message: response.data.message || 'Registration failed'
+      };
     } catch (error) {
       console.error('Registration error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Registration failed'
+        message: error.response?.data?.message || 'Registration failed. Please try again.'
       };
     } finally {
       setLoading(false);
@@ -154,18 +172,20 @@ export const AuthProvider = ({ children }) => {
 
   const refreshSession = async (refreshToken) => {
     try {
-      const response = await apiClient.post(`${API_BASE_URLS.USER_SERVICE}/sessions/refresh`, null, {
-        params: { refreshToken }
-      });
+      const response = await apiClient.post(
+        `${API_BASE_URLS.USER_SERVICE}/sessions/refresh`,
+        null,
+        { params: { refreshToken } }
+      );
 
       if (response.data.success) {
         const sessionData = response.data.data;
 
         // Update stored tokens
-        localStorage.setItem('authToken', sessionData.accessToken);
+        localStorage.setItem('authToken', sessionData.sessionToken);
         localStorage.setItem('refreshToken', sessionData.refreshToken);
 
-        setSessionToken(sessionData.accessToken);
+        setSessionToken(sessionData.sessionToken);
         return true;
       }
 
@@ -178,9 +198,10 @@ export const AuthProvider = ({ children }) => {
 
   const validateSession = async (token) => {
     try {
-      const response = await apiClient.get(`${API_BASE_URLS.USER_SERVICE}/sessions/validate`, {
-        params: { sessionToken: token }
-      });
+      const response = await apiClient.get(
+        `${API_BASE_URLS.USER_SERVICE}/sessions/validate`,
+        { params: { sessionToken: token } }
+      );
 
       return response.data.success && response.data.data === true;
     } catch (error) {
@@ -195,19 +216,17 @@ export const AuthProvider = ({ children }) => {
 
       if (token) {
         // Deactivate session on backend
-        await apiClient.patch(`${API_BASE_URLS.USER_SERVICE}/sessions/deactivate`, null, {
-          params: { sessionToken: token }
-        });
+        await apiClient.patch(
+          `${API_BASE_URLS.USER_SERVICE}/sessions/deactivate`,
+          null,
+          { params: { sessionToken: token } }
+        );
       }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       // Clear local storage and state
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('userData');
-      localStorage.removeItem('sessionId');
-
+      clearAuthData();
       setUser(null);
       setSessionToken(null);
       setIsAuthenticated(false);
@@ -218,9 +237,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('authToken');
       if (token) {
-        await apiClient.patch(`${API_BASE_URLS.USER_SERVICE}/sessions/update-access`, null, {
-          params: { sessionToken: token }
-        });
+        await apiClient.patch(
+          `${API_BASE_URLS.USER_SERVICE}/sessions/update-access`,
+          null,
+          { params: { sessionToken: token } }
+        );
       }
     } catch (error) {
       console.error('Update last accessed error:', error);
@@ -228,8 +249,23 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Helper functions
+  const formatPhoneNumber = (phone) => {
+    // Remove all non-digits
+    const cleaned = phone.replace(/\D/g, '');
+
+    // Handle different formats
+    if (cleaned.length === 10 && cleaned.match(/^[6-9]/)) {
+      return cleaned; // Return 10-digit format as required by API
+    } else if (cleaned.length === 12 && cleaned.startsWith('91')) {
+      return cleaned.substring(2); // Remove country code
+    } else if (cleaned.length === 13 && cleaned.startsWith('91')) {
+      return cleaned.substring(2); // Remove country code
+    }
+
+    return cleaned;
+  };
+
   const generateDeviceId = () => {
-    // Generate a unique device ID (you can make this more sophisticated)
     let deviceId = localStorage.getItem('deviceId');
     if (!deviceId) {
       deviceId = 'web_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();

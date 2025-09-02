@@ -55,25 +55,25 @@ const Login = () => {
 
   // Handle phone number submission
   const handlePhoneSubmit = async (data) => {
-    const formattedPhone = formatPhoneNumber(data.phone);
+      const formattedPhone = formatPhoneNumber(data.phone);
 
-    if (!isValidPhoneNumber(formattedPhone)) {
-      showError('Invalid Phone Number', 'Please enter a valid Indian mobile number');
-      return;
-    }
+      if (!isValidPhoneNumber(formattedPhone)) {
+        showError('Invalid Phone Number', 'Please enter a valid Indian mobile number');
+        return;
+      }
 
-    const result = await sendOTP(formattedPhone);
+      const result = await sendOTP(formattedPhone);
 
-    if (result.success) {
-      setPhoneNumber(formattedPhone);
-      setStep(2);
-      setOtpTimer(300); // 5 minutes
-      setCanResendOtp(false);
-      showSuccess('OTP Sent', `Verification code sent to ${formattedPhone}`);
-    } else {
-      showError('Failed to Send OTP', result.message);
-    }
-  };
+      if (result.success) {
+        setPhoneNumber(formattedPhone);
+        setStep(2);
+        setOtpTimer(300); // 5 minutes
+        setCanResendOtp(false);
+        showSuccess('OTP Sent', `Verification code sent to +91${formattedPhone}`);
+      } else {
+        showError('Failed to Send OTP', result.message);
+      }
+    };
 
   // Handle OTP submission
   const handleOtpSubmit = async (data) => {
