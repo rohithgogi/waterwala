@@ -72,7 +72,7 @@ public class AddressController {
             @ApiResponse(responseCode = "200", description = "Address deleted successfully"),
             @ApiResponse(responseCode = "404", description = "Address not found")
     })
-    @PreAuthorize("@securityService.ownsAddress(#addreddId)")
+    @PreAuthorize("@securityService.ownsAddress(#addressId)")
     public ResponseEntity<StandardResponse<String>> deleteAddress( @Parameter(description = "Address ID") @PathVariable Long addressId){
         addressService.deleteAddress(addressId);
         return ResponseEntity.ok(StandardResponse.success("Address deleted successfully"));
@@ -87,7 +87,7 @@ public class AddressController {
             @ApiResponse(responseCode = "200", description = "Default address updated successfully"),
             @ApiResponse(responseCode = "404", description = "Address not found")
     })
-    @PreAuthorize("@securityService.ownsAddress(#AddressId)")
+    @PreAuthorize("@securityService.ownsAddress(#addressId)")
     public ResponseEntity<StandardResponse<AddressResponseDto>> setDefaultAddress(@Parameter(description = "Address ID")@PathVariable Long addressId){
         addressService.setDefaultAddress(addressId);
         return ResponseEntity.ok(StandardResponse.success("Default address updated successfully"));

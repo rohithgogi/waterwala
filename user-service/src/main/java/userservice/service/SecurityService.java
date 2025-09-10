@@ -9,7 +9,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import org.springframework.stereotype.Service;
 import userservice.model.Address;
+import userservice.model.UserSession;
 import userservice.repository.AddressRepository;
+import userservice.repository.UserSessionRepository;
 
 import java.util.Optional;
 
@@ -19,6 +21,7 @@ import java.util.Optional;
 public class SecurityService {
 
     private final AddressRepository addressRepository;
+    private final UserSessionRepository sessionRepository;
 
     /**
      * Get the current authenticated user ID
@@ -113,6 +116,30 @@ public class SecurityService {
 
         // All other roles can only modify their own data
         return currentUserId.equals(targetUserId);
+    }
+
+    /**
+     * Check if current user can modify their own session
+     * Used in UserSessionController for session management operations
+     */
+    public boolean canModifyOwnSession(String sessionToken) {
+        Long currentUserId = getCurrentUserId();
+        String currentRole = getCurrentUserRole();
+
+        if (currentUserId == null || currentRole == null) {
+            return false;
+        }
+
+        // Admin can modify any session
+        if ("ADMIN".equals(currentRole)) {
+            return true;
+        }
+
+        // Find the session and check if it belongs to current user
+        return sessionRepository.findBySessionTokenAndIsActiveTrue(sessionToken)
+                .map(session -> session.getUser().getId().equals(currentUserId))
+                .orElse(false);
+
     }
 
     /**
