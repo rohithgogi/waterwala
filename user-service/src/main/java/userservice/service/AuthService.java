@@ -25,6 +25,7 @@ public class AuthService {
     private final OTPService otpService;
     private final UserSessionService sessionService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisSessionService redisSessionService;
 
     @Transactional
     public LoginResponseDto login(UserLoginDto loginDto) {
@@ -32,6 +33,7 @@ public class AuthService {
         try {
             log.info("Starting login for phone: {}", loginDto.getPhone());
 
+            // Verify OTP
             boolean isValidOTP = otpService.verifyOTP(loginDto.getPhone(), loginDto.getOtp(), OTPType.LOGIN);
             log.info("OTP validation result: {}", isValidOTP);
 
@@ -39,15 +41,20 @@ public class AuthService {
                 throw new InvalidCredentialsException("Invalid or expired OTP");
             }
 
+            // Find user
             User user = userRepository.findByPhone(loginDto.getPhone())
                     .orElseThrow(() -> new UserNotFoundException("User not found"));
             log.info("User found: {}", user.getId());
 
-            String jwt = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
+            // Check user status
             if (user.getStatus() == UserStatus.SUSPENDED) {
                 throw new InvalidCredentialsException("Account suspended");
             }
 
+            // Generate JWT token
+            String jwt = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
+
+            // Create session (this will store in both MySQL and Redis)
             UserSessionDto session = sessionService.createSession(
                     user.getId(),
                     loginDto.getDeviceId(),
@@ -56,9 +63,11 @@ public class AuthService {
             );
             log.info("Session created with token: {}", session.getSessionToken());
 
+            // Update last login
             userService.updateLastLogin(user.getId());
             log.info("Last login updated");
 
+            // Build response
             LoginResponseDto response = LoginResponseDto.builder()
                     .sessionToken(session.getSessionToken())
                     .refreshToken(session.getRefreshToken())
@@ -67,7 +76,7 @@ public class AuthService {
                     .expiresIn(session.getRemainingTimeInSeconds())
                     .build();
 
-            log.info("Login response built successfully");
+            log.info("Login successful for user: {}", user.getId());
             return response;
 
         } catch (Exception e) {
@@ -76,4 +85,37 @@ public class AuthService {
         }
     }
 
+    /**
+     * Logout user by invalidating session
+     */
+    public void logout(String sessionToken) {
+        try {
+            log.info("Starting logout for session: {}", sessionToken);
+
+            // Invalidate session in both Redis and MySQL
+            sessionService.deactivateSession(sessionToken);
+
+            log.info("Logout successful for session: {}", sessionToken);
+        } catch (Exception e) {
+            log.error("Error during logout: ", e);
+            throw new InvalidCredentialsException("Logout failed");
+        }
+    }
+
+    /**
+     * Logout user from all devices
+     */
+    public void logoutFromAllDevices(Long userId) {
+        try {
+            log.info("Starting logout from all devices for user: {}", userId);
+
+            // Invalidate all sessions for the user
+            sessionService.deactivateAllSessionsByUserId(userId);
+
+            log.info("Logout from all devices successful for user: {}", userId);
+        } catch (Exception e) {
+            log.error("Error during logout from all devices: ", e);
+            throw new InvalidCredentialsException("Logout from all devices failed");
+        }
+    }
 }
