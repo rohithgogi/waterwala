@@ -25,7 +25,6 @@ public class AuthService {
     private final OTPService otpService;
     private final UserSessionService sessionService;
     private final JwtTokenProvider jwtTokenProvider;
-    private final RedisSessionService redisSessionService;
 
     @Transactional
     public LoginResponseDto login(UserLoginDto loginDto) {
@@ -54,7 +53,7 @@ public class AuthService {
             // Generate JWT token
             String jwt = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
 
-            // Create session (this will store in both MySQL and Redis)
+            // Create session (MySQL only)
             UserSessionDto session = sessionService.createSession(
                     user.getId(),
                     loginDto.getDeviceId(),
@@ -86,13 +85,13 @@ public class AuthService {
     }
 
     /**
-     * Logout user by invalidating session
+     * Logout user by invalidating session (MySQL only)
      */
     public void logout(String sessionToken) {
         try {
             log.info("Starting logout for session: {}", sessionToken);
 
-            // Invalidate session in both Redis and MySQL
+            // Invalidate session in MySQL
             sessionService.deactivateSession(sessionToken);
 
             log.info("Logout successful for session: {}", sessionToken);
@@ -103,7 +102,7 @@ public class AuthService {
     }
 
     /**
-     * Logout user from all devices
+     * Logout user from all devices (MySQL only)
      */
     public void logoutFromAllDevices(Long userId) {
         try {

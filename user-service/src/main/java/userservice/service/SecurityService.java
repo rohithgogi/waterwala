@@ -1,15 +1,11 @@
 package userservice.service;
 
-
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-
 import org.springframework.stereotype.Service;
 import userservice.model.Address;
-import userservice.model.UserSession;
 import userservice.repository.AddressRepository;
 import userservice.repository.UserSessionRepository;
 
@@ -139,7 +135,6 @@ public class SecurityService {
         return sessionRepository.findBySessionTokenAndIsActiveTrue(sessionToken)
                 .map(session -> session.getUser().getId().equals(currentUserId))
                 .orElse(false);
-
     }
 
     /**
@@ -175,5 +170,22 @@ public class SecurityService {
      */
     public boolean canModifyAddresses(Long targetUserId) {
         return canModifyUserData(targetUserId);
+    }
+
+    /**
+     * Helper method to check if current user is the owner of an address
+     * Used by AddressService with @PreAuthorize
+     */
+    public boolean isAddressOwner(Long addressId, Long currentUserId) {
+        String currentRole = getCurrentUserRole();
+
+        // Admin can access all addresses
+        if ("ADMIN".equals(currentRole)) {
+            return true;
+        }
+
+        // Check if the address belongs to the current user
+        Optional<Address> address = addressRepository.findById(addressId);
+        return address.isPresent() && address.get().getUser().getId().equals(currentUserId);
     }
 }
