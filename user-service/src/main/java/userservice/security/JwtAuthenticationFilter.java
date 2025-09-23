@@ -15,7 +15,6 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import userservice.dto.SessionData;
 import userservice.service.UserSessionService;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -60,17 +59,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getTokenFromRequest(request);
 
             if (StringUtils.hasText(jwt)) {
-                // First validate JWT structure and signature
+                // Validate JWT structure and signature
                 if (tokenProvider.validateToken(jwt)) {
+                    // Extract user information from JWT
+                    Long userId = tokenProvider.getUserIdFromToken(jwt);
+                    String role = tokenProvider.getRoleFromToken(jwt);
 
-                    // Then check session validity in Redis (fast lookup)
-                    SessionData sessionData = sessionService.getSessionData(jwt);
-
-                    if (sessionData != null && sessionData.isValid()) {
-                        Long userId = sessionData.getUserId();
-                        String role = sessionData.getUserRole();
-
-                        log.debug("Authenticated user: {} with role: {} from Redis session", userId, role);
+                    // Verify session exists and is valid in database
+                    if (sessionService.isSessionValid(jwt)) {
+                        log.debug("Authenticated user: {} with role: {} from JWT", userId, role);
 
                         // Create authorities with ROLE_ prefix for Spring Security
                         List<SimpleGrantedAuthority> authorities = List.of(
@@ -84,13 +81,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                        // Update last accessed time in Redis (async operation)
+                        // Update last accessed time in database
                         sessionService.updateLastAccessed(jwt);
 
-                        log.debug("Successfully authenticated user: {} via Redis session", userId);
+                        log.debug("Successfully authenticated user: {} via JWT", userId);
                     } else {
-                        log.warn("Session not found or invalid in Redis for token");
-                        // Optional: Add token to blacklist if it's a valid JWT but invalid session
+                        log.warn("Session not found or invalid for token");
                     }
                 } else {
                     log.debug("JWT token validation failed");
@@ -100,12 +96,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (ExpiredJwtException ex) {
             log.error("JWT token is expired: {}", ex.getMessage());
-            // Could add blacklisting logic here for expired tokens
-            String expiredToken = getTokenFromRequest(request);
-            if (StringUtils.hasText(expiredToken)) {
-                // Optionally blacklist the expired token to prevent reuse
-                log.debug("Could blacklist expired token: {}", expiredToken);
-            }
         } catch (MalformedJwtException ex) {
             log.error("Invalid JWT token: {}", ex.getMessage());
         } catch (Exception ex) {
