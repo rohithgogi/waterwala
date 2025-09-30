@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserValidationResponse {
+public class UserValidationDto {
 
     @JsonProperty("exists")
     private Boolean exists;

@@ -157,7 +157,7 @@ public class BusinessController {
             @ApiResponse(responseCode = "200", description = "Rating updated successfully"),
             @ApiResponse(responseCode = "404", description = "Business not found")
     })
-    @PreAuthorize("ADMIN")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> updateBusinessRating(
             @Parameter(description = "Business ID") @PathVariable Long businessId,
             @Parameter(description = "Average rating") @RequestParam Double rating,

@@ -20,6 +20,7 @@ spring:
       write-dates-as-timestamps: false
       indent-output: true
 
+
 server:
   port: 8081
 
