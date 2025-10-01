@@ -1,7 +1,7 @@
 package businessservice.service;
 
 import businessservice.client.UserServiceClient;
-import businessservice.client.dto.UserValidationResponse;
+import businessservice.client.dto.UserValidationDto;
 import businessservice.dto.BusinessProfileDto;
 import businessservice.dto.BusinessRegistrationDto;
 import businessservice.dto.BusinessSearchDto;
@@ -81,7 +81,7 @@ public class BusinessService {
         try {
             log.info("Validating user {} with user-service", userId);
 
-            UserValidationResponse validation = userServiceClient.validateUser(userId).getBody();
+            UserValidationDto validation = userServiceClient.validateUser(userId).getBody();
 
             if (validation == null) {
                 log.error("Received null validation response for userId: {}", userId);

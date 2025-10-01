@@ -36,6 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/api/v1/auth/login") ||
                 path.equals("/api/v1/users/register") ||
                 path.startsWith("/api/v1/users/exists/") ||
+                path.matches("/api/v1/users/\\d+/validate") ||  // CRITICAL: Add validation endpoint
                 path.startsWith("/api/v1/otp/") ||
                 path.startsWith("/api/v1/sessions/create") ||
                 path.startsWith("/api/v1/sessions/refresh") ||

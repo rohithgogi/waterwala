@@ -56,7 +56,6 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "User validation completed"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
-    @SecurityRequirement(name = "")
     public ResponseEntity<UserValidationDto> validateUser(
             @Parameter(description = "User ID to validate") @PathVariable Long userId) {
         UserValidationDto validation = service.validateUser(userId);

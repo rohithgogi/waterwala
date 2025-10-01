@@ -41,8 +41,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/send-otp",
                                 "/api/v1/auth/login",
-                                "/api/v1/users/register",  // Specific registration endpoint
-                                "/api/v1/users/exists/**", // Specific exists endpoints
+                                "/api/v1/users/register",
+                                "/api/v1/users/exists/**",
+                                "/api/v1/users/*/validate",  // CRITICAL: Add this for validation endpoint
                                 "/api/v1/otp/send/**",
                                 "/api/v1/otp/verify",
                                 "/api/v1/otp/status",
@@ -75,7 +76,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/users/id/**",
                                 "/api/v1/users/*/verify-phone",
-                                "/api/v1/users/*/verify-email",     // This now requires authentication
+                                "/api/v1/users/*/verify-email",
                                 "/api/v1/users/*/last-login"
                         ).hasAnyRole("CUSTOMER", "BUSINESS_OWNER", "ADMIN")
 
