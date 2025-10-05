@@ -66,29 +66,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     Long userId = tokenProvider.getUserIdFromToken(jwt);
                     String role = tokenProvider.getRoleFromToken(jwt);
 
-                    // Verify session exists and is valid in database
-                    if (sessionService.isSessionValid(jwt)) {
-                        log.debug("Authenticated user: {} with role: {} from JWT", userId, role);
+                    log.debug("Authenticated user: {} with role: {} from JWT", userId, role);
 
-                        // Create authorities with ROLE_ prefix for Spring Security
-                        List<SimpleGrantedAuthority> authorities = List.of(
-                                new SimpleGrantedAuthority("ROLE_" + role)
-                        );
+                    // Create authorities with ROLE_ prefix for Spring Security
+                    List<SimpleGrantedAuthority> authorities = List.of(
+                            new SimpleGrantedAuthority("ROLE_" + role)
+                    );
 
-                        // Create authentication token with userId as principal
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(userId, null, authorities);
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    // Create authentication token with userId as principal
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                        // Update last accessed time in database
-                        sessionService.updateLastAccessed(jwt);
-
-                        log.debug("Successfully authenticated user: {} via JWT", userId);
-                    } else {
-                        log.warn("Session not found or invalid for token");
-                    }
+                    log.debug("Successfully authenticated user: {} via JWT", userId);
                 } else {
                     log.debug("JWT token validation failed");
                 }
@@ -105,7 +97,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
-
     private String getTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {

@@ -28,13 +28,11 @@ public class AuthService {
 
     @Transactional
     public LoginResponseDto login(UserLoginDto loginDto) {
-
         try {
             log.info("Starting login for phone: {}", loginDto.getPhone());
 
             // Verify OTP
             boolean isValidOTP = otpService.verifyOTP(loginDto.getPhone(), loginDto.getOtp(), OTPType.LOGIN);
-            log.info("OTP validation result: {}", isValidOTP);
 
             if (!isValidOTP) {
                 throw new InvalidCredentialsException("Invalid or expired OTP");
@@ -43,34 +41,31 @@ public class AuthService {
             // Find user
             User user = userRepository.findByPhone(loginDto.getPhone())
                     .orElseThrow(() -> new UserNotFoundException("User not found"));
-            log.info("User found: {}", user.getId());
 
             // Check user status
             if (user.getStatus() == UserStatus.SUSPENDED) {
                 throw new InvalidCredentialsException("Account suspended");
             }
 
-            // Generate JWT token
+            // Generate JWT (for authentication)
             String jwt = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
 
-            // Create session (MySQL only)
+            // Create session (for device management)
             UserSessionDto session = sessionService.createSession(
                     user.getId(),
                     loginDto.getDeviceId(),
                     loginDto.getDeviceType(),
                     loginDto.getFcmToken()
             );
-            log.info("Session created with token: {}", session.getSessionToken());
 
             // Update last login
             userService.updateLastLogin(user.getId());
-            log.info("Last login updated");
 
             // Build response
             LoginResponseDto response = LoginResponseDto.builder()
-                    .sessionToken(session.getSessionToken())
-                    .refreshToken(session.getRefreshToken())
-                    .accessToken(jwt)
+                    .sessionToken(session.getSessionToken())  // For device management
+                    .refreshToken(session.getRefreshToken())  // For token refresh
+                    .accessToken(jwt)                          // For authentication (use this in Swagger!)
                     .user(userService.getUserById(user.getId()))
                     .expiresIn(session.getRemainingTimeInSeconds())
                     .build();

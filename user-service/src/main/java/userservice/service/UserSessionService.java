@@ -34,15 +34,15 @@ public class UserSessionService {
         // Deactivate existing sessions for the same device
         sessionRepository.deactivateSessionsByUserIdAndDeviceId(userId, deviceId);
 
-        // Create new session
+        // Create new session for device tracking
         UserSession session = UserSession.builder()
                 .user(user)
-                .sessionToken(generateSessionToken())
+                .sessionToken(generateSessionToken())  // Keep unique session token
                 .refreshToken(generateRefreshToken())
                 .deviceId(deviceId)
                 .deviceType(deviceType)
                 .fcmToken(fcmToken)
-                .expiresAt(LocalDateTime.now().plusDays(30)) // 30 days expiry
+                .expiresAt(LocalDateTime.now().plusDays(30))
                 .lastAccessedAt(LocalDateTime.now())
                 .isActive(true)
                 .build();
@@ -51,6 +51,7 @@ public class UserSessionService {
         log.info("Created new session for user: {} on device: {}", userId, deviceId);
         return convertToDto(savedSession);
     }
+
 
     public UserSessionDto refreshSession(String refreshToken) {
         UserSession session = sessionRepository.findByRefreshTokenAndIsActiveTrue(refreshToken)
