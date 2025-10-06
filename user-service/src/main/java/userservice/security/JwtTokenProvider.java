@@ -1,7 +1,6 @@
 package userservice.security;
 
 import io.jsonwebtoken.*;
-
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Component;
 import userservice.enums.UserRole;
 
 import javax.crypto.SecretKey;
-import java.security.Key;
 import java.util.Date;
 
 @Component
@@ -19,13 +17,20 @@ public class JwtTokenProvider {
     private final SecretKey key;
     private final int jwtExpirationInMs;
 
-    public JwtTokenProvider(@Value("${jwt.secret}") String jwtSecret,@Value("${jwt.expiration:86400000}") int jwtExpirationInMs){
-        this.key= Keys.hmacShaKeyFor(jwtSecret.getBytes());
-        this.jwtExpirationInMs=jwtExpirationInMs;
+    public JwtTokenProvider(
+            @Value("${jwt.secret}") String jwtSecret,
+            @Value("${jwt.expiration:86400000}") int jwtExpirationInMs) {
+
+        // Convert the base64 string to SecretKey in the constructor
+        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        this.jwtExpirationInMs = jwtExpirationInMs;
+
+        log.info("JWT Token Provider initialized with expiration: {} ms", jwtExpirationInMs);
     }
-    public String generateToken(Long userId, String email, UserRole role){
-        Date now=new Date();
-        Date expiryDate=new Date(now.getTime()+jwtExpirationInMs);
+
+    public String generateToken(Long userId, String email, UserRole role) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
                 .setSubject(userId.toString())
@@ -37,8 +42,8 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public Long getUserIdFromToken(String token){
-        Claims claims=Jwts.parserBuilder()
+    public Long getUserIdFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
@@ -46,21 +51,21 @@ public class JwtTokenProvider {
         return Long.valueOf(claims.getSubject());
     }
 
-    public String getEmailFromToken(String token){
-        Claims claims=Jwts.parserBuilder()
+    public String getEmailFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.get("email",String.class);
+        return claims.get("email", String.class);
     }
+
     public String getRoleFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-
         return claims.get("role", String.class);
     }
 
@@ -70,7 +75,7 @@ public class JwtTokenProvider {
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(authToken);
-            log.info("JWT token is valid.");
+            log.debug("JWT token is valid");
             return true;
         } catch (MalformedJwtException ex) {
             log.error("Invalid JWT token: {}", ex.getMessage());
@@ -92,7 +97,6 @@ public class JwtTokenProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-
         return claims.getExpiration();
     }
 }
