@@ -88,37 +88,11 @@ public class EmailService {
         }
     }
 
-    @Async
-    public void sendPasswordResetConfirmation(String toEmail, String userName) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail, fromName);
-            helper.setTo(toEmail);
-            helper.setSubject("Password Reset Successful - " + appName);
-
-            Context context = new Context();
-            context.setVariable("userName", userName);
-            context.setVariable("appName", appName);
-            context.setVariable("resetTime", LocalDateTime.now().format(
-                    DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")));
-
-            String htmlContent = templateEngine.process("password-reset-confirmation", context);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-            log.info("Password reset confirmation sent to: {}", toEmail);
-
-        } catch (Exception e) {
-            log.error("Failed to send password reset confirmation to {}: {}", toEmail, e.getMessage());
-        }
-    }
 
     private String getSubject(OTPType otpType) {
         return switch (otpType) {
             case EMAIL_VERIFICATION -> "Verify Your Email - " + appName;
-            case PASSWORD_RESET -> "Password Reset Code - " + appName;
             case LOGIN -> "Your Login Code - " + appName;
             case REGISTRATION -> "Complete Your Registration - " + appName;
             default -> "Verification Code - " + appName;

@@ -62,23 +62,7 @@ public class OtpController {
         return ResponseEntity.ok(StandardResponse.success("Phone Verification OTP sent successfully", response));
     }
 
-    @PostMapping("/send/password-reset")
-    @Operation(summary = "Send password reset OTP", description = "Sends a 6-digit OTP to the specified phone number for password reset purposes. OTP expires in 5 minutes.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password reset OTP sent successfully"),
-            @ApiResponse(responseCode = "404", description = "Phone number not registered"),
-            @ApiResponse(responseCode = "429", description = "Too many OTP requests")
-    })
-    @SecurityRequirement(name = "")
-    public ResponseEntity<StandardResponse<OTPResponseDto>> sendPasswordResetOTP(
-            @Parameter(description = "Registered phone number") @RequestParam String phone) {
-        otpService.passwordResetOTP(phone);
-        OTPResponseDto response = OTPResponseDto.sent(
-                OTPType.PASSWORD_RESET,
-                java.time.LocalDateTime.now().plusSeconds(300)
-        );
-        return ResponseEntity.ok(StandardResponse.success("Password Reset OTP sent successfully", response));
-    }
+
 
     @PostMapping("/verify")
     @Operation(summary = "Verify OTP", description = "Verifies the provided OTP code for the specified contact and OTP type")

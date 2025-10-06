@@ -66,20 +66,7 @@ public class OTPService {
         }
     }
 
-    public void passwordResetOTP(String phone) {
-        String otpCode = generateOTP();
-        OTP otp = createOTP(null, phone, otpCode, OTPType.PASSWORD_RESET);
-        otpRepository.save(otp);
 
-        // Send SMS
-        try {
-            smsService.sendOTP(phone, otpCode, OTPType.PASSWORD_RESET);
-            log.info("Password reset OTP sent to: {}", phone);
-        } catch (Exception e) {
-            log.error("Failed to send password reset OTP to {}: {}", phone, e.getMessage());
-            throw new RuntimeException("Failed to send OTP SMS", e);
-        }
-    }
 
     public boolean verifyOTP(String contact, String otpCode, OTPType type) {
         Optional<OTP> otpOptional = findLatestOTP(contact, type);

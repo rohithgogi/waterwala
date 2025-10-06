@@ -45,10 +45,7 @@ public class SmsService {
                     "Your WaterWala phone verification code is: %s\n\nValid for 10 minutes.",
                     otpCode
             );
-            case PASSWORD_RESET -> String.format(
-                    "Your WaterWala password reset OTP is: %s\n\nValid for 5 minutes.\nIf you didn't request this, please ignore.",
-                    otpCode
-            );
+
             case REGISTRATION -> String.format(
                     "Welcome to WaterWala! Your registration OTP is: %s\n\nValid for 10 minutes.",
                     otpCode
