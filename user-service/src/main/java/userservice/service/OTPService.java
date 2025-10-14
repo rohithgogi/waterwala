@@ -26,6 +26,7 @@ public class OTPService {
         OTP otp = createOTP(email, null, otpCode, OTPType.EMAIL_VERIFICATION);
         otpRepository.save(otp);
 
+
         // Send email asynchronously
         try {
             emailService.sendOTP(email, otpCode, OTPType.EMAIL_VERIFICATION, otp.getExpiresAt());
