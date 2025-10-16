@@ -34,10 +34,14 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final MongoTemplate mongoTemplate;
+    private final ProductValidationService validationService;
 
     @Override
     public ProductResponse createProduct(ProductCreateRequest request) {
-        log.info("Creating product with SKU: {}", request.getSku());
+        log.info("Creating product with SKU: {} for business: {}", request.getSku(), request.getBusinessId());
+
+        // CRITICAL: Validate business before creating product
+        validationService.validateProductCreationRequirements(request.getBusinessId());
 
         if (productRepository.findBySku(request.getSku()).isPresent()) {
             throw new DuplicateSkuException(request.getSku());
@@ -63,16 +67,17 @@ public class ProductServiceImpl implements ProductService {
 
         Product product = findProductById(id);
 
+        // CRITICAL: Validate business ownership before updating
+        validationService.validateProductUpdateRequirements(product.getBusinessId());
+
         // Validate SKU uniqueness for update
         if (!isSkuUniqueForUpdate(request.getSku(), id)) {
             throw new DuplicateSkuException(request.getSku());
         }
 
-        // Validate business logic
         validateProductUpdateData(request);
 
         try {
-            // Update product entity
             productMapper.updateEntity(product, request);
             Product updatedProduct = productRepository.save(product);
 
@@ -89,6 +94,9 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProduct(String id) {
         log.info("Deleting product with ID: {}", id);
         Product product = findProductById(id);
+
+        // CRITICAL: Validate business ownership before deleting
+        validationService.validateProductUpdateRequirements(product.getBusinessId());
 
         try {
             productRepository.delete(product);
@@ -156,7 +164,9 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> getProductByBusiness(String businessId) {
         log.debug("Getting products by businessId: {}", businessId);
-        List<Product> products = productRepository.findByBusinessId(businessId);
+        // Convert String to Long for repository call
+        Long businessIdLong = Long.valueOf(businessId);
+        List<Product> products = productRepository.findByBusinessId(businessIdLong);
         return productMapper.toResponseList(products);
     }
 
@@ -164,7 +174,8 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> getActiveProductByBusiness(String businessId) {
         log.debug("Getting active products by business ID: {}", businessId);
-        List<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessId);
+        Long businessIdLong = Long.valueOf(businessId);
+        List<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessIdLong);
         return productMapper.toResponseList(products);
     }
 
@@ -172,7 +183,8 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> getAvailableProductByBusiness(String businessId) {
         log.debug("Getting available products by business ID: {}", businessId);
-        List<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessId);
+        Long businessIdLong = Long.valueOf(businessId);
+        List<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessIdLong);
         return productMapper.toResponseList(products);
     }
 
@@ -204,7 +216,6 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> searchProductByName(String name) {
         log.debug("Searching products by name: {}", name);
-        // MongoDB regex search for case-insensitive matching
         String regex = ".*" + name + ".*";
         List<Product> products = productRepository.findByNameRegexAndIsActiveTrueAndIsAvailableTrue(regex);
         return productMapper.toResponseList(products);
@@ -227,7 +238,8 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> getProductByCategoryAndBusiness(ProductCategory category, String businessId) {
         log.debug("Getting products by category: {} and business ID: {}", category, businessId);
-        List<Product> products = productRepository.findByCategoryAndBusinessIdAndIsActiveTrueAndIsAvailableTrue(category, businessId);
+        Long businessIdLong = Long.valueOf(businessId);
+        List<Product> products = productRepository.findByCategoryAndBusinessIdAndIsActiveTrueAndIsAvailableTrue(category, businessIdLong);
         return productMapper.toResponseList(products);
     }
 
@@ -264,7 +276,8 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public Page<ProductResponse> getProductsByBusiness(String businessId, Pageable pageable) {
         log.debug("Getting products by business ID: {} with pagination", businessId);
-        Page<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessId, pageable);
+        Long businessIdLong = Long.valueOf(businessId);
+        Page<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessIdLong, pageable);
         return products.map(productMapper::toResponse);
     }
 
@@ -273,7 +286,6 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductResponse> searchProducts(String searchTerm, Pageable pageable) {
         log.debug("Searching products with term: {}", searchTerm);
         List<Product> products = productRepository.searchAvailableActiveProducts(searchTerm);
-        // Convert List to Page manually since MongoDB repository method returns List
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), products.size());
         List<Product> pageContent = products.subList(start, end);
@@ -289,7 +301,8 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public long countProductsByBusiness(String businessId) {
         log.debug("Counting products by business ID: {}", businessId);
-        return productRepository.countByBusinessIdAndIsActiveTrue(businessId);
+        Long businessIdLong = Long.valueOf(businessId);
+        return productRepository.countByBusinessIdAndIsActiveTrue(businessIdLong);
     }
 
     @Override
@@ -409,9 +422,9 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> getTopSellingProducts(String businessId, int limit) {
         log.debug("Getting top {} selling products for business ID: {}", limit, businessId);
-        // This would typically involve sales data, but for now return latest products
+        Long businessIdLong = Long.valueOf(businessId);
         Pageable pageable = PageRequest.of(0, limit);
-        List<Product> products = productRepository.findTopSellingProductsByBusiness(businessId, pageable);
+        List<Product> products = productRepository.findTopSellingProductsByBusiness(businessIdLong, pageable);
         return productMapper.toResponseList(products);
     }
 
@@ -419,7 +432,8 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> getRecentlyAddedProducts(String businessId, int limit) {
         log.debug("Getting recently added {} products for business ID: {}", limit, businessId);
-        List<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessId);
+        Long businessIdLong = Long.valueOf(businessId);
+        List<Product> products = productRepository.findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(businessIdLong);
         return productMapper.toResponseList(products.stream()
                 .limit(limit)
                 .toList());
@@ -432,18 +446,15 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void validateProductData(ProductCreateRequest request) {
-        // Validate pricing
         if (request.getDiscountedPrice() != null &&
                 request.getDiscountedPrice().compareTo(request.getBasePrice()) >= 0) {
             throw new InvalidProductDataException("Discounted price must be less than base price");
         }
 
-        // Validate order quantities
         if (request.getMinOrderQuantity() > request.getMaxOrderQuantity()) {
             throw new InvalidProductDataException("Minimum order quantity cannot be greater than maximum order quantity");
         }
 
-        // Validate stock levels
         if (request.getMinStockLevel() > request.getMaxStockLevel()) {
             throw new InvalidProductDataException("Minimum stock level cannot be greater than maximum stock level");
         }
@@ -454,13 +465,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void validateProductUpdateData(ProductUpdateRequest request) {
-        // Validate pricing
         if (request.getDiscountedPrice() != null &&
                 request.getDiscountedPrice().compareTo(request.getBasePrice()) >= 0) {
             throw new InvalidProductDataException("Discounted price must be less than base price");
         }
 
-        // Validate order quantities
         if (request.getMinOrderQuantity() > request.getMaxOrderQuantity()) {
             throw new InvalidProductDataException("Minimum order quantity cannot be greater than maximum order quantity");
         }

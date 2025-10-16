@@ -1,21 +1,19 @@
 package productservice.model;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Document(collection = "products")
 @Data
 @Builder
@@ -44,8 +42,9 @@ public class Product {
 
     private String unit;
 
+    // CHANGED: businessId from String to Long
     @Indexed
-    private String businessId;
+    private Long businessId;
 
     private Boolean isActive;
     private Boolean isAvailable;

@@ -1,4 +1,4 @@
-package productservice.client;
+package businessservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -7,7 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO for business validation response from Business Service
+ * DTO for business validation response
+ * Used by other services to validate business status
  */
 @Data
 @Builder

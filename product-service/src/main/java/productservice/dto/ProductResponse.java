@@ -52,8 +52,9 @@ public class ProductResponse {
     @Schema(description = "Unit of measurement", example = "pieces")
     private String unit;
 
-    @Schema(description = "Business identifier", example = "business_123")
-    private String businessId;
+    // CHANGED: businessId from String to Long
+    @Schema(description = "Business identifier", example = "1")
+    private Long businessId;
 
     @Schema(description = "Product active status", example = "true")
     private Boolean isActive;

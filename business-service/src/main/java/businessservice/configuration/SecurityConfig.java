@@ -1,4 +1,5 @@
 package businessservice.configuration;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,15 +29,25 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
                         .requestMatchers("/api/v1/businesses/search",
                                 "/api/v1/businesses/featured",
-                                "/api/v1/businesses/{businessId}").permitAll()
+                                "/api/v1/businesses/{businessId}",
+                                // IMPORTANT: Add validation endpoints as public for inter-service communication
+                                "/api/v1/businesses/{businessId}/validate",
+                                "/api/v1/businesses/{businessId}/info",
+                                "/api/v1/businesses/{businessId}/owner/{userId}")
+                        .permitAll()
+                        // Swagger endpoints
                         .requestMatchers("/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**").permitAll()
+                        // Actuator endpoints
                         .requestMatchers("/actuator/**").permitAll()
+                        // Business registration - requires BUSINESS_OWNER role
                         .requestMatchers("/api/v1/businesses/register").hasRole("BUSINESS_OWNER")
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

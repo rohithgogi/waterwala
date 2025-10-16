@@ -23,6 +23,9 @@ public interface ProductService {
     // Retrieval operations
     ProductResponse getProductById(String id);
     ProductResponse getProductBySku(String sku);
+
+    // CHANGED: All business-related methods use String for internal consistency
+    // (They convert Long to String internally)
     List<ProductResponse> getProductByBusiness(String businessId);
     List<ProductResponse> getActiveProductByBusiness(String businessId);
     List<ProductResponse> getAvailableProductByBusiness(String businessId);

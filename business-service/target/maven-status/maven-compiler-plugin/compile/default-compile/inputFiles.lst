@@ -1,11 +1,14 @@
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\BusinessServiceApplication.java
-C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\client\dto\UserValidationResponse.java
+C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\client\dto\UserValidationDto.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\client\UserServiceClient.java
+C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\configuration\CustomFeignErrorDecoder.java
+C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\configuration\FeignConfig.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\configuration\JwtAuthenticationFilter.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\configuration\JwtUtil.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\configuration\SecurityConfig.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\configuration\SwaggerConfig.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\controller\BusinessController.java
+C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\controller\BusinessValidationController.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\dto\BusinessAddressDto.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\dto\BusinessOperatingHoursDto.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\dto\BusinessProfileDto.java
@@ -13,6 +16,7 @@ C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\bu
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\dto\BusinessSearchDto.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\dto\BusinessServiceDto.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\dto\BusinessUpdateDto.java
+C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\dto\BusinessValidationDto.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\dto\BusinessVerificationDto.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\dto\LocalTimeFlexibleDeserializer.java
 C:\Users\LENOVO\IdeaProjects\waterwala-backend\business-service\src\main\java\businessservice\exceptions\BusinessAlreadyExistsException.java

@@ -1,4 +1,3 @@
-// ProductRepository.java
 package productservice.repository;
 
 import org.springframework.data.domain.Page;
@@ -17,9 +16,10 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends MongoRepository<Product, String> {
 
-    List<Product> findByBusinessId(String businessId);
+    // CHANGED: All businessId parameters from String to Long
+    List<Product> findByBusinessId(Long businessId);
 
-    List<Product> findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(String businessId);
+    List<Product> findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(Long businessId);
 
     List<Product> findByCategoryAndIsActiveTrueAndIsAvailableTrue(ProductCategory category);
 
@@ -29,24 +29,20 @@ public interface ProductRepository extends MongoRepository<Product, String> {
 
     List<Product> findByNameRegexAndIsActiveTrueAndIsAvailableTrue(String nameRegex);
 
-    // Products in price range
     @Query("{ 'isActive': true, 'isAvailable': true, 'basePrice': { $gte: ?0, $lte: ?1 } }")
     List<Product> findProductsInPriceRange(BigDecimal minPrice, BigDecimal maxPrice);
 
-    // Find products by category and business
     List<Product> findByCategoryAndBusinessIdAndIsActiveTrueAndIsAvailableTrue(
-            ProductCategory category, String businessId);
+            ProductCategory category, Long businessId);
 
-    // Pagination queries
     Page<Product> findByIsActiveTrueAndIsAvailableTrue(Pageable pageable);
 
     Page<Product> findByCategoryAndIsActiveTrueAndIsAvailableTrue(
             ProductCategory category, Pageable pageable);
 
     Page<Product> findByBusinessIdAndIsActiveTrueAndIsAvailableTrue(
-            String businessId, Pageable pageable);
+            Long businessId, Pageable pageable);
 
-    // Search products by name and description
     @Query("{ 'isActive': true, 'isAvailable': true, " +
             "$or: [" +
             "  { 'name': { $regex: ?0, $options: 'i' } }," +
@@ -54,42 +50,32 @@ public interface ProductRepository extends MongoRepository<Product, String> {
             "] }")
     List<Product> searchAvailableActiveProducts(String searchTerm);
 
-    // Count products by business
-    long countByBusinessIdAndIsActiveTrue(String businessId);
+    long countByBusinessIdAndIsActiveTrue(Long businessId);
 
-    // Find products by brand
     List<Product> findByBrandAndIsActiveTrueAndIsAvailableTrue(String brand);
 
-    // Find products with low stock
     @Query("{ 'isActive': true, 'inventory.currentStock': { $lte: '$inventory.reorderPoint' } }")
     List<Product> findProductsWithLowStock();
 
-    // Check if SKU exists for different product
     boolean existsBySkuAndIdNot(String sku, String id);
 
-    // Find products by multiple categories
     @Query("{ 'isActive': true, 'isAvailable': true, 'category': { $in: ?0 } }")
     List<Product> findByMultipleCategories(List<ProductCategory> categories);
 
-    // Find latest products
     @Query(value = "{ 'isActive': true, 'isAvailable': true }", sort = "{ 'createdAt': -1 }")
     List<Product> findLatestProducts(Pageable pageable);
 
-    // Check if product has sufficient stock
     @Query("{ '_id': ?0, 'inventory.currentStock': { $gte: ?1 } }")
     Optional<Product> findByIdWithSufficientStock(String productId, Integer requiredQuantity);
 
-    // Find products by business with stock below reorder point
     @Query("{ 'businessId': ?0, 'isActive': true, " +
             "'inventory.currentStock': { $lte: '$inventory.reorderPoint' } }")
-    List<Product> findLowStockProductsByBusiness(String businessId);
+    List<Product> findLowStockProductsByBusiness(Long businessId);
 
-    // Aggregation for top selling products (placeholder - would need sales data)
     @Query(value = "{ 'businessId': ?0, 'isActive': true, 'isAvailable': true }",
             sort = "{ 'createdAt': -1 }")
-    List<Product> findTopSellingProductsByBusiness(String businessId, Pageable pageable);
+    List<Product> findTopSellingProductsByBusiness(Long businessId, Pageable pageable);
 
-    // Text search across multiple fields
     @Query("{ $text: { $search: ?0 }, 'isActive': true, 'isAvailable': true }")
     List<Product> findByTextSearch(String searchText);
 }

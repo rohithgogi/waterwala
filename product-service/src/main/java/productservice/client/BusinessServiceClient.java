@@ -4,7 +4,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import productservice.client.BusinessValidationDto;
 import productservice.configuration.FeignConfig;
 
 /**
@@ -32,7 +31,7 @@ public interface BusinessServiceClient {
      * @return BusinessValidationDto containing business details and validation status
      */
     @GetMapping("/api/v1/businesses/{businessId}/validate")
-    ResponseEntity<BusinessValidationDto> validateBusiness(@PathVariable("businessId") String businessId);
+    ResponseEntity<BusinessValidationDto> validateBusiness(@PathVariable("businessId") Long businessId);
 
     /**
      * Verifies if a user is the owner of a specific business
@@ -44,7 +43,7 @@ public interface BusinessServiceClient {
      */
     @GetMapping("/api/v1/businesses/{businessId}/owner/{userId}")
     ResponseEntity<Boolean> isBusinessOwner(
-            @PathVariable("businessId") String businessId,
+            @PathVariable("businessId") Long businessId,
             @PathVariable("userId") Long userId
     );
 
@@ -56,5 +55,5 @@ public interface BusinessServiceClient {
      * @return Basic business information
      */
     @GetMapping("/api/v1/businesses/{businessId}/info")
-    ResponseEntity<BusinessValidationDto> getBusinessInfo(@PathVariable("businessId") String businessId);
+    ResponseEntity<BusinessValidationDto> getBusinessInfo(@PathVariable("businessId") Long businessId);
 }

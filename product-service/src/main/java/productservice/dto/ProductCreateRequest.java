@@ -71,9 +71,10 @@ public class ProductCreateRequest {
     @Schema(description = "Unit of measurement", example = "pieces", required = true)
     private String unit;
 
+    // CHANGED: businessId from String to Long to match Business Service
     @NotNull(message = "Business ID is required")
-    @Schema(description = "Business identifier", example = "business_123", required = true)
-    private String businessId;
+    @Schema(description = "Business identifier", example = "1", required = true)
+    private Long businessId;
 
     @Schema(description = "Brand name", example = "AquaPure")
     private String brand;

@@ -27,10 +27,10 @@ public class ProductValidationService {
     /**
      * Validates that a business exists, is active, and verified
      *
-     * @param businessId The business ID to validate
+     * @param businessId The business ID to validate (changed to Long)
      * @throws InvalidProductDataException if business is invalid
      */
-    public void validateBusinessForProductCreation(String businessId) {
+    public void validateBusinessForProductCreation(Long businessId) {
         log.info("Validating business for product creation: {}", businessId);
 
         try {
@@ -85,11 +85,11 @@ public class ProductValidationService {
     /**
      * Validates that the authenticated user owns the specified business
      *
-     * @param businessId The business ID
+     * @param businessId The business ID (changed to Long)
      * @param userId The user ID (from JWT token)
      * @throws InvalidProductDataException if user doesn't own the business
      */
-    public void validateBusinessOwnership(String businessId, Long userId) {
+    public void validateBusinessOwnership(Long businessId, Long userId) {
         log.info("Validating business ownership: businessId={}, userId={}", businessId, userId);
 
         try {
@@ -190,9 +190,9 @@ public class ProductValidationService {
      * - Business exists and is verified
      * - User owns the business (unless admin)
      *
-     * @param businessId The business ID
+     * @param businessId The business ID (changed to Long)
      */
-    public void validateProductCreationRequirements(String businessId) {
+    public void validateProductCreationRequirements(Long businessId) {
         log.info("Validating all product creation requirements for business: {}", businessId);
 
         // Validate business
@@ -215,9 +215,9 @@ public class ProductValidationService {
      * Validates all requirements for product update
      * Same as creation, but may have different rules in the future
      *
-     * @param businessId The business ID
+     * @param businessId The business ID (changed to Long)
      */
-    public void validateProductUpdateRequirements(String businessId) {
+    public void validateProductUpdateRequirements(Long businessId) {
         // For now, same as creation requirements
         validateProductCreationRequirements(businessId);
     }
