@@ -27,6 +27,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/businesses")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 @Tag(name = "Business Management", description = "APIs for managing business operations")
 public class BusinessController {
     private final BusinessService businessService;
