@@ -28,7 +28,7 @@ public class BusinessValidationController {
 
     private final BusinessRepository businessRepository;
 
-    @GetMapping("/{businessId}/validate")
+    @GetMapping("/validate/{businessId}")
     @Operation(
             summary = "Validate business for product creation",
             description = "Validates if a business exists, is active, verified, and can create products"
@@ -38,7 +38,7 @@ public class BusinessValidationController {
             @ApiResponse(responseCode = "404", description = "Business not found")
     })
     public ResponseEntity<BusinessValidationDto> validateBusiness(
-            @Parameter(description = "Business ID") @PathVariable Long businessId) {
+            @Parameter(description = "Business ID") @PathVariable("businessId") Long businessId) {
 
         log.info("Validating business with ID: {}", businessId);
 

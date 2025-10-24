@@ -18,7 +18,7 @@ import productservice.configuration.FeignConfig;
  * - JWT token propagation
  */
 @FeignClient(
-        name = "business-service",
+        name = "business-service",url = "http://localhost:8082",
         configuration = FeignConfig.class
 )
 public interface BusinessServiceClient {
@@ -30,7 +30,7 @@ public interface BusinessServiceClient {
      * @param businessId The ID of the business to validate
      * @return BusinessValidationDto containing business details and validation status
      */
-    @GetMapping("/api/v1/businesses/{businessId}/validate")
+    @GetMapping("/api/v1/businesses/validate/{businessId}")
     ResponseEntity<BusinessValidationDto> validateBusiness(@PathVariable("businessId") Long businessId);
 
     /**

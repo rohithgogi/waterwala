@@ -31,7 +31,7 @@ import java.util.List;
 public class ProductController {
     private final ProductService productService;
 
-    @PostMapping
+    @PostMapping("/create")
     @Operation(
             summary = "Create a new product",
             description = "Create a new product with inventory information. Automatically validates business and sets up initial inventory tracking."
