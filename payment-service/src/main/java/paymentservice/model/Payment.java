@@ -65,18 +65,15 @@ public class Payment {
     @Builder.Default
     private PaymentStatus status = PaymentStatus.PENDING;
 
-    // Stripe specific fields
+    // Razorpay specific fields
     @Column(unique = true)
-    private String stripePaymentIntentId;
+    private String razorpayOrderId;
+
+    @Column(unique = true)
+    private String razorpayPaymentId;
 
     @Column
-    private String stripeChargeId;
-
-    @Column
-    private String stripeCustomerId;
-
-    @Column(length = 1000)
-    private String stripePaymentMethodId;
+    private String razorpaySignature;
 
     // Transaction details
     @Column(length = 500)

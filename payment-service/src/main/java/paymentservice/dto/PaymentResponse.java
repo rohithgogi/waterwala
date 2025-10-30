@@ -1,4 +1,5 @@
 package paymentservice.dto;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,8 +25,9 @@ public class PaymentResponse {
     private String currency;
     private PaymentMethod paymentMethod;
     private PaymentStatus status;
-    private String stripePaymentIntentId;
-    private String stripeClientSecret; // For frontend to complete payment
+    private String razorpayOrderId;
+    private String razorpayPaymentId;
+    private String razorpayKeyId; // For frontend integration
     private String description;
     private String failureReason;
     private LocalDateTime paidAt;
