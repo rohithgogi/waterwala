@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: user-service
+
+  # Database Configuration - ALL FROM ENV VARS
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/waterwala_users}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}  # NO DEFAULT - MUST BE SET!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: ${JPA_SHOW_SQL:false}  # false in production
+    properties:
+      hibernate:
+        format_sql: ${JPA_FORMAT_SQL:false}
+        use_sql_comments: false
+
+  # Email Configuration - ALL FROM ENV VARS
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}  # NO DEFAULT!
+    password: ${MAIL_PASSWORD}  # NO DEFAULT!
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        transport:
+          protocol: smtp
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: true
+
+server:
+  port: ${SERVER_PORT:8081}
+
+# Eureka Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# JWT Configuration - FROM ENV VARS
+jwt:
+  secret: ${JWT_SECRET}  # NO DEFAULT - MUST BE SET!
+  expiration: ${JWT_EXPIRATION:86400000}  # 24 hours default
+
+# Twilio Configuration - FROM ENV VARS
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID}  # NO DEFAULT!
+  auth-token: ${TWILIO_AUTH_TOKEN}    # NO DEFAULT!
+  phone-number: ${TWILIO_PHONE_NUMBER}  # NO DEFAULT!
+
+# App Configuration
+app:
+  name: ${APP_NAME:WaterWala}
+  email:
+    from: ${APP_EMAIL_FROM:noreply@waterwala.com}
+    from-name: ${APP_EMAIL_FROM_NAME:WaterWala Team}
