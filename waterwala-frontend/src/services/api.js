@@ -23,7 +23,11 @@ api.interceptors.request.use(
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    // Backend returns { success, message, data, timestamp }
+    // Return the whole response for services to handle
+    return response.data;
+  },
   async (error) => {
     const originalRequest = error.config;
 
@@ -40,6 +44,7 @@ api.interceptors.response.use(
             { params: { refreshToken } }
           );
 
+          // Backend returns StandardResponse with data
           const { accessToken, refreshToken: newRefreshToken } = response.data.data;
           localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('refreshToken', newRefreshToken);
@@ -52,12 +57,22 @@ api.interceptors.response.use(
           toast.error('Session expired. Please login again.');
           return Promise.reject(refreshError);
         }
+      } else {
+        // No refresh token, redirect to login
+        localStorage.clear();
+        window.location.href = '/login';
+        toast.error('Please login to continue.');
       }
     }
 
     // Handle other errors
     const message = error.response?.data?.message || 'An error occurred';
-    toast.error(message);
+
+    // Don't show error toast for 404s on validation checks
+    if (error.response?.status !== 404 || !originalRequest.url?.includes('validate')) {
+      toast.error(message);
+    }
+
     return Promise.reject(error);
   }
 );

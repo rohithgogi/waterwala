@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Phone, Lock } from 'lucide-react';
@@ -17,8 +17,20 @@ export const LoginForm = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm();
+
+  // Countdown timer for OTP resend
+  useEffect(() => {
+    if (otpSent && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (countdown === 0) {
+      setCanResend(true);
+    }
+  }, [countdown, otpSent]);
 
   const handleSendOTP = async (data) => {
     const phoneError = validators.phone(data.phone);
@@ -33,6 +45,8 @@ export const LoginForm = () => {
       setPhoneNumber(data.phone);
       setStep('otp');
       setOtpSent(true);
+      setCountdown(60);
+      setCanResend(false);
       toast.success('OTP sent successfully!');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to send OTP');
@@ -70,11 +84,15 @@ export const LoginForm = () => {
 
   const handleResendOTP = async () => {
     setLoading(true);
+    setCanResend(false);
+    setCountdown(60);
+
     try {
       await authService.sendLoginOTP(phoneNumber);
       toast.success('OTP resent successfully!');
     } catch (error) {
       toast.error('Failed to resend OTP');
+      setCanResend(true);
     } finally {
       setLoading(false);
     }
@@ -164,14 +182,20 @@ export const LoginForm = () => {
             </Button>
 
             <div className="text-center space-y-2">
-              <button
-                type="button"
-                onClick={handleResendOTP}
-                disabled={loading}
-                className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
-              >
-                Resend OTP
-              </button>
+              {!canResend ? (
+                <p className="text-sm text-gray-600">
+                  Resend OTP in <strong>{countdown}s</strong>
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResendOTP}
+                  disabled={loading}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-semibold disabled:opacity-50"
+                >
+                  Resend OTP
+                </button>
+              )}
 
               <p className="text-sm text-gray-600">
                 <button
@@ -179,6 +203,7 @@ export const LoginForm = () => {
                   onClick={() => {
                     setStep('phone');
                     setValue('otp', '');
+                    setOtpSent(false);
                   }}
                   className="text-blue-600 hover:text-blue-700 font-semibold"
                 >

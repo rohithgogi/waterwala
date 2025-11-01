@@ -43,6 +43,9 @@ spring:
 server:
   port: ${SERVER_PORT:8081}
 
+  config:
+    import: optional:file:.env
+
 # Eureka Configuration
 eureka:
   client:

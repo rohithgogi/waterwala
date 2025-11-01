@@ -18,21 +18,40 @@ public class SmsService {
 
     public void sendOTP(String toPhoneNumber, String otpCode, OTPType otpType) {
         try {
+            // ✅ Normalize to E.164 format
+            String formattedPhone = formatPhoneNumber(toPhoneNumber);
+
             String messageBody = buildOtpMessage(otpCode, otpType);
 
             Message message = Message.creator(
-                    new PhoneNumber(toPhoneNumber),
+                    new PhoneNumber(formattedPhone),
                     new PhoneNumber(twilioConfig.getPhoneNumber()),
                     messageBody
             ).create();
 
             log.info("SMS sent successfully. SID: {}, To: {}, Type: {}",
-                    message.getSid(), toPhoneNumber, otpType);
+                    message.getSid(), formattedPhone, otpType);
 
         } catch (Exception e) {
             log.error("Failed to send SMS to {}: {}", toPhoneNumber, e.getMessage());
             throw new SmsDeliveryException("Failed to send SMS: " + e.getMessage());
         }
+    }
+
+    private String formatPhoneNumber(String phone) {
+        phone = phone.trim().replace(" ", "").replace("-", "");
+
+        // If already valid international
+        if (phone.startsWith("+")) {
+            return phone;
+        }
+
+        // If 10-digit Indian mobile number
+        if (phone.length() == 10) {
+            return "+91" + phone;
+        }
+
+        throw new IllegalArgumentException("Invalid phone number format: " + phone);
     }
 
     private String buildOtpMessage(String otpCode, OTPType otpType) {
@@ -45,28 +64,26 @@ public class SmsService {
                     "Your WaterWala phone verification code is: %s\n\nValid for 10 minutes.",
                     otpCode
             );
-
             case REGISTRATION -> String.format(
                     "Welcome to WaterWala! Your registration OTP is: %s\n\nValid for 10 minutes.",
                     otpCode
             );
-            default -> String.format(
-                    "Your WaterWala verification code is: %s",
-                    otpCode
-            );
+            default -> String.format("Your WaterWala verification code is: %s", otpCode);
         };
     }
 
     public void sendCustomMessage(String toPhoneNumber, String message) {
         try {
+            String formattedPhone = formatPhoneNumber(toPhoneNumber);
+
             Message twilioMessage = Message.creator(
-                    new PhoneNumber(toPhoneNumber),
+                    new PhoneNumber(formattedPhone),
                     new PhoneNumber(twilioConfig.getPhoneNumber()),
                     message
             ).create();
 
             log.info("Custom SMS sent successfully. SID: {}, To: {}",
-                    twilioMessage.getSid(), toPhoneNumber);
+                    twilioMessage.getSid(), formattedPhone);
 
         } catch (Exception e) {
             log.error("Failed to send custom SMS to {}: {}", toPhoneNumber, e.getMessage());

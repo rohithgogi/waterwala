@@ -12,13 +12,13 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 public class TwilioConfig {
 
-    @Value("${TWILIO_ACCOUNT_SID}")
+    @Value("${twilio.account-sid}")
     private String accountSid;
 
-    @Value("${TWILIO_AUTH_TOKEN}")
+    @Value("${twilio.auth-token}")
     private String authToken;
 
-    @Value("${TWILIO_PHONE_NUMBER}")
+    @Value("${twilio.phone-number}")
     private String phoneNumber;
 
     @PostConstruct

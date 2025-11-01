@@ -32,25 +32,34 @@ export const AddressForm = ({ address, onSubmit, onCancel }) => {
           Address Type
         </label>
         <div className="grid grid-cols-3 gap-3">
-          {Object.values(ADDRESS_TYPES).map((type) => (
-            <label
-              key={type}
-              className="relative flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
-            >
-              <input
-                type="radio"
-                value={type}
-                {...register('type', { required: 'Address type is required' })}
-                className="sr-only"
-              />
-              <div className="text-center">
-                <span className="text-2xl mb-1 block">
-                  {type === 'HOME' ? '🏠' : type === 'OFFICE' ? '🏢' : '📍'}
-                </span>
-                <span className="text-sm font-medium text-gray-700">{type}</span>
-              </div>
-            </label>
-          ))}
+          {Object.values(ADDRESS_TYPES).map((type) => {
+            const isSelected = watch('type') === type;
+            return (
+              <label
+                key={type}
+                className={`relative flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                  isSelected
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-300 hover:border-blue-300'
+                }`}
+              >
+                <input
+                  type="radio"
+                  value={type}
+                  {...register('type', { required: 'Address type is required' })}
+                  className="sr-only"
+                />
+                <div className="text-center">
+                  <span className="text-2xl mb-1 block">
+                    {type === 'HOME' ? '🏠' : type === 'OFFICE' ? '🏢' : '📍'}
+                  </span>
+                  <span className={`text-sm font-medium ${isSelected ? 'text-blue-600' : 'text-gray-700'}`}>
+                    {type}
+                  </span>
+                </div>
+              </label>
+            );
+          })}
         </div>
         {errors.type && (
           <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
